@@ -15,8 +15,8 @@ const CardCanvas = forwardRef<HTMLCanvasElement, CardCanvasProps>(({ builderData
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const W = 800
-    const H = builderData.cardType === 'pfp-frame' ? 800 : 1060
+    const W = builderData.cardType === 'pfp-frame' ? 960 : 800
+    const H = builderData.cardType === 'pfp-frame' ? 740 : 1060
     canvas.width = W
     canvas.height = H
 
@@ -508,20 +508,58 @@ function roundRectPath(
   ctx.closePath()
 }
 
-// Square PFP Frame Mode
+// ============================
+// PFP FRAME — Hacker House Goa Reference Style
+// Landscape canvas, big yellow serif heading, thick yellow ring,
+// pink side badges, dashed accents, vertical hashtag, GOA/2026 pill
+// ============================
 function drawPFPFrame(ctx: CanvasRenderingContext2D, W: number, H: number, data: BuilderData) {
-  const forestGreen = '#044A29'
-  const sunYellow = '#F4B728'
-  const terracottaRed = '#D9432F'
+  const forest    = '#044A29'
+  const yellow    = '#F4B728'
+  const pink      = '#FF2D8D'
+  const darkGreen = '#033620'
 
-  ctx.fillStyle = forestGreen
+  // 1. Background fill (deep forest green)
+  ctx.fillStyle = forest
   ctx.fillRect(0, 0, W, H)
 
-  const cx = W / 2
-  const cy = H / 2
-  const r = 310
+  // 2. Subtle grid line texture
+  ctx.save()
+  ctx.strokeStyle = 'rgba(244,183,40,0.06)'
+  ctx.lineWidth = 1
+  const gridGap = 50
+  for (let gx = 0; gx < W; gx += gridGap) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke()
+  }
+  for (let gy = 0; gy < H; gy += gridGap) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke()
+  }
+  ctx.restore()
 
-  // Photo circle
+  // 3. Thin top ornament (centered tick + horizontal bars)
+  ctx.save()
+  ctx.strokeStyle = yellow
+  ctx.lineWidth = 2
+  const tickX = W / 2
+  ctx.beginPath(); ctx.moveTo(tickX - 30, 28); ctx.lineTo(tickX - 4, 28); ctx.stroke()
+  ctx.beginPath(); ctx.moveTo(tickX + 4, 28); ctx.lineTo(tickX + 30, 28); ctx.stroke()
+  ctx.beginPath(); ctx.moveTo(tickX, 18); ctx.lineTo(tickX, 36); ctx.stroke()
+  ctx.restore()
+
+  // 4. "HACKER HOUSE" heading — big yellow serif
+  ctx.save()
+  ctx.font = '900 92px "Cormorant Garamond", "Georgia", serif'
+  ctx.fillStyle = yellow
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillText('HACKER HOUSE', W / 2, 44)
+  ctx.restore()
+
+  // 5. Circle photo frame
+  const cx = W / 2
+  const cy = H / 2 + 40   // shift circle down slightly so heading has breathing room
+  const r  = Math.min(W, H) * 0.36
+
   if (data.imageUrl) {
     const img = new Image()
     img.crossOrigin = 'anonymous'
@@ -533,85 +571,174 @@ function drawPFPFrame(ctx: CanvasRenderingContext2D, W: number, H: number, data:
       const aspect = img.width / img.height
       let sx = 0, sy = 0, sw = img.width, sh = img.height
       if (aspect > 1) { sw = img.height; sx = (img.width - sw) / 2 }
-      else { sh = img.width; sy = (img.height - sh) / 2 }
+      else            { sh = img.width;  sy = (img.height - sh) / 2 }
       ctx.drawImage(img, sx, sy, sw, sh, cx - r, cy - r, r * 2, r * 2)
       ctx.restore()
-      drawPFPOverlay(ctx, W, H, cx, cy, r, data, forestGreen, sunYellow, terracottaRed)
+      drawPFPDecoration(ctx, W, H, cx, cy, r, data, forest, yellow, pink, darkGreen)
     }
     img.src = data.imageUrl
   } else {
+    // Placeholder
     ctx.save()
     ctx.beginPath()
     ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.fillStyle = 'rgba(244, 183, 40, 0.15)'
+    ctx.fillStyle = 'rgba(244,183,40,0.10)'
     ctx.fill()
     ctx.restore()
-    drawPFPOverlay(ctx, W, H, cx, cy, r, data, forestGreen, sunYellow, terracottaRed)
+    drawPFPDecoration(ctx, W, H, cx, cy, r, data, forest, yellow, pink, darkGreen)
   }
 }
 
-function drawPFPOverlay(
+function drawPFPDecoration(
   ctx: CanvasRenderingContext2D,
-  _W: number,
+  W: number,
   H: number,
   cx: number,
   cy: number,
   r: number,
   data: BuilderData,
-  _forestGreen: string,
-  sunYellow: string,
-  terracottaRed: string
+  forest: string,
+  yellow: string,
+  pink: string,
+  darkGreen: string
 ) {
-  // Dual Ring Frame
+  // 6. Thick yellow outer ring
   ctx.save()
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
-  ctx.strokeStyle = sunYellow
-  ctx.lineWidth = 10
-  ctx.stroke()
-
-  ctx.beginPath()
-  ctx.arc(cx, cy, r + 8, 0, Math.PI * 2)
-  ctx.strokeStyle = terracottaRed
-  ctx.lineWidth = 3
+  ctx.strokeStyle = yellow
+  ctx.lineWidth = 18
   ctx.stroke()
   ctx.restore()
 
-  // Top title
+  // 7. Decorative pink accent dashes on the ring (top-left & top-right arcs)
+  const dashAngles = [
+    { start: -Math.PI * 0.95, end: -Math.PI * 0.80 },  // top-left dash
+    { start: -Math.PI * 0.20, end: -Math.PI * 0.05 },  // top-right dash
+  ]
+  dashAngles.forEach(({ start, end }) => {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, start, end)
+    ctx.strokeStyle = pink
+    ctx.lineWidth = 18
+    ctx.stroke()
+    ctx.restore()
+  })
+
+  // 8. Left side pink badge pill — "HH"
+  const leftBadgeX = cx - r - 8
+  const leftBadgeY = cy
+  drawPillBadge(ctx, leftBadgeX, leftBadgeY, 52, 52, 26, pink, 'HH', '#fff')
+
+  // 9. Right side pink badge pill — "26" (year)
+  const rightBadgeX = cx + r + 8
+  const rightBadgeY = cy
+  drawPillBadge(ctx, rightBadgeX, rightBadgeY, 52, 52, 26, pink, '26', '#fff')
+
+  // 10. Vertical "#FRAMEINGOA" text on the left edge
   ctx.save()
+  ctx.translate(26, H / 2 + 60)
+  ctx.rotate(-Math.PI / 2)
+  ctx.font = '700 12px "Space Mono", monospace'
+  ctx.fillStyle = 'rgba(244,183,40,0.55)'
   ctx.textAlign = 'center'
-  ctx.font = '900 24px "Cormorant Garamond", serif'
-  ctx.fillStyle = sunYellow
-  ctx.fillText('HACKER HOUSE GOA 2026', cx, cy - r - 22)
+  ctx.letterSpacing = '3px'
+  ctx.fillText('#FRAMEINGOA', 0, 0)
   ctx.restore()
 
-  // Bottom Name Tag
+  // 11. "2:47PM STUDIO" badge — dark green rounded box, bottom-right inside circle
+  const studioX = cx + r * 0.3
+  const studioY = cy + r * 0.5
+  const stuW = 130
+  const stuH = 58
+  ctx.save()
+  ctx.fillStyle = darkGreen
+  roundRectPath(ctx, studioX - stuW / 2, studioY - stuH / 2, stuW, stuH, 10)
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(244,183,40,0.3)'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = '900 22px "Space Grotesk", sans-serif'
+  ctx.fillStyle = yellow
+  ctx.fillText('2:47', studioX, studioY - 8)
+  ctx.font = '700 12px "Space Mono", monospace'
+  ctx.fillText('PM  STUDIO', studioX, studioY + 14)
+  ctx.restore()
+
+  // 12. Bottom "GOA / 2026" rounded pill
+  const pillW = 280
+  const pillH = 62
+  const pillX = cx - pillW / 2
+  const pillY = cy + r + 20
+  ctx.save()
+  ctx.fillStyle = darkGreen
+  roundRectPath(ctx, pillX, pillY, pillW, pillH, 31)
+  ctx.fill()
+  ctx.strokeStyle = yellow
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = '900 30px "Space Grotesk", sans-serif'
+  ctx.fillStyle = yellow
+  const yearLabel = data.dates ? data.dates.split('·')[0]?.trim() : `GOA  /  2026`
+  ctx.fillText(yearLabel.toUpperCase() || 'GOA  /  2026', cx, pillY + pillH / 2)
+  ctx.restore()
+
+  // 13. Name text below pill (if provided)
   if (data.name) {
     ctx.save()
-    const tagW = 320
-    const tagH = 46
-    const tagX = cx - tagW / 2
-    const tagY = cy + r - 50
-
-    ctx.fillStyle = sunYellow
-    ctx.fillRect(tagX, tagY, tagW, tagH)
-    ctx.strokeStyle = terracottaRed
-    ctx.lineWidth = 2
-    ctx.strokeRect(tagX, tagY, tagW, tagH)
-
     ctx.textAlign = 'center'
-    ctx.font = '900 22px "Cormorant Garamond", serif'
-    ctx.fillStyle = '#044A29'
-    ctx.fillText(data.name.toUpperCase(), cx, tagY + 28)
+    ctx.textBaseline = 'middle'
+    ctx.font = '700 18px "Space Grotesk", sans-serif'
+    ctx.fillStyle = 'rgba(250,245,235,0.75)'
+    ctx.fillText(data.name.toUpperCase(), cx, pillY + pillH + 28)
     ctx.restore()
   }
 
-  // Footer hashtag
+  // 14. Bottom hashtag watermark
   ctx.save()
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'bottom'
+  ctx.font = '700 13px "Space Mono", monospace'
+  ctx.fillStyle = pink
+  ctx.fillText('#FrameInGoa', W - 28, H - 18)
+  ctx.restore()
+
+  // 15. Tiny "Hacker House Goa 2026" watermark bottom-left
+  ctx.save()
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'bottom'
+  ctx.font = '600 11px "Space Mono", monospace'
+  ctx.fillStyle = 'rgba(244,183,40,0.40)'
+  ctx.fillText('HACKER HOUSE GOA 2026', 28, H - 18)
+  ctx.restore()
+
+  // 16. Suppress unused forest param warning
+  void forest
+}
+
+// Helper: draw a circular/square pill badge centered at (cx, cy)
+function drawPillBadge(
+  ctx: CanvasRenderingContext2D,
+  cx: number, cy: number,
+  w: number, h: number, radius: number,
+  bg: string, label: string, textColor: string
+) {
+  ctx.save()
+  ctx.fillStyle = bg
+  roundRectPath(ctx, cx - w / 2, cy - h / 2, w, h, radius)
+  ctx.fill()
   ctx.textAlign = 'center'
-  ctx.font = '700 16px "Space Mono", monospace'
-  ctx.fillStyle = sunYellow
-  ctx.fillText('#FrameInGoa', cx, H - 40)
+  ctx.textBaseline = 'middle'
+  ctx.font = '900 18px "Space Grotesk", sans-serif'
+  ctx.fillStyle = textColor
+  ctx.fillText(label, cx, cy)
   ctx.restore()
 }
 
