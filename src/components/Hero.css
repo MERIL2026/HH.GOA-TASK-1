@@ -80,7 +80,7 @@
 
 /* Main editorial title */
 .hero__title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-canela);
   font-weight: 700;
   text-transform: uppercase;
   line-height: 0.87;
@@ -106,7 +106,7 @@
 /* Hindi / focal accent text */
 .hero__hindi {
   display: block;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-canela);
   font-size: clamp(36px, 5.5vw, 72px);
   font-weight: 600;
   font-style: italic;

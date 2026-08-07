@@ -1,7 +1,7 @@
 /* ============================
-   GOOGLE FONTS
+   GOOGLE FONTS — CANELA DISPLAY FAMILY & ALTERNATIVES
 ============================= */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;0,6..96,700;0,6..96,800;0,6..96,900;1,6..96,400;1,6..96,700&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400;1,600&family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
 /* ============================
    DESIGN TOKENS — OFFICIAL HH GOA TICKET PALETTE
@@ -16,10 +16,12 @@
   --hh-terracotta:  #D9432F;   /* Badge & Wavy Border Terracotta Red */
   --hh-white:       #FFFFFF;
 
-  /* === Typography === */
-  --font-serif: 'Cormorant Garamond', 'Georgia', serif;
-  --font-sans:  'Space Grotesk', sans-serif;
-  --font-mono:  'Space Mono', monospace;
+  /* === Typography — CANELA DISPLAY STYLING === */
+  --font-canela:  'Canela', 'Canela Display', 'Cinzel Decorative', 'Bodoni Moda', 'Cinzel', 'Cormorant Garamond', serif;
+  --font-serif:   'Canela', 'Canela Display', 'Cinzel Decorative', 'Bodoni Moda', 'Cinzel', 'Cormorant Garamond', serif;
+  --font-display: 'Canela', 'Canela Display', 'Cinzel Decorative', 'Bodoni Moda', 'Cinzel', 'Cormorant Garamond', serif;
+  --font-sans:    'Space Grotesk', sans-serif;
+  --font-mono:    'Space Mono', monospace;
 
   /* === Spacing === */
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
@@ -58,6 +60,13 @@ body {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
+/* Global Heading Font — Canela Display */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-canela);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
 img, svg, video { max-width: 100%; display: block; }
 button { cursor: pointer; border: none; font-family: var(--font-sans); background: none; }
 a { color: inherit; text-decoration: none; }
@@ -69,10 +78,10 @@ input, textarea, select { font-family: var(--font-sans); }
 ::-webkit-scrollbar-thumb { background: var(--hh-sun-yellow); }
 
 /* ============================
-   TYPOGRAPHY SCALE
+   TYPOGRAPHY SCALE — CANELA DISPLAY
 ============================= */
 .display-hero {
-  font-family: var(--font-serif);
+  font-family: var(--font-canela);
   font-size: clamp(64px, 11vw, 150px);
   font-weight: 700;
   line-height: 0.88;
@@ -82,7 +91,7 @@ input, textarea, select { font-family: var(--font-sans); }
 }
 
 .display-large {
-  font-family: var(--font-serif);
+  font-family: var(--font-canela);
   font-size: clamp(36px, 5vw, 76px);
   font-weight: 700;
   line-height: 0.95;
@@ -91,12 +100,28 @@ input, textarea, select { font-family: var(--font-sans); }
 }
 
 .display-medium {
-  font-family: var(--font-serif);
+  font-family: var(--font-canela);
   font-size: clamp(28px, 3.5vw, 48px);
   font-weight: 700;
   line-height: 1.0;
   text-transform: uppercase;
   color: var(--hh-sun-yellow);
+}
+
+.heading-lg {
+  font-family: var(--font-canela);
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--hh-white);
+}
+
+.heading-md {
+  font-family: var(--font-canela);
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--hh-white);
 }
 
 /* ============================

@@ -63,14 +63,14 @@ function drawOfficialTicketCard(ctx: CanvasRenderingContext2D, W: number, H: num
 
   // Top Header Text: HACKER HOUSE + गोवा
   ctx.save()
-  ctx.font = '900 42px "Cormorant Garamond", "Georgia", serif'
+  ctx.font = '900 42px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif'
   ctx.fillStyle = white
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
   ctx.fillText('HACKER HOUSE', 48, 60)
 
   // Hindi text "गोवा"
-  ctx.font = '900 40px "Cormorant Garamond", serif'
+  ctx.font = '900 40px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif'
   ctx.fillStyle = sunYellow
   ctx.fillText('गोवा', 400, 60)
 
@@ -171,7 +171,7 @@ function drawCardDetailsAndFooter(
   const nameText = (data.name || 'EKLAVYA DILIP JHA').toUpperCase()
   ctx.save()
   const nameFontSize = fitFontSize(ctx, nameText, W - 120, 52, 28)
-  ctx.font = `900 ${nameFontSize}px "Cormorant Garamond", "Georgia", serif`
+  ctx.font = `900 ${nameFontSize}px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif`
   ctx.fillStyle = forestGreen
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -481,10 +481,10 @@ function drawPlaceholderSubject(
 // Helper: Fit font size dynamically to width
 function fitFontSize(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, startSize: number, minSize: number): number {
   let size = startSize
-  ctx.font = `900 ${size}px "Cormorant Garamond", serif`
+  ctx.font = `900 ${size}px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif`
   while (ctx.measureText(text).width > maxWidth && size > minSize) {
     size -= 1
-    ctx.font = `900 ${size}px "Cormorant Garamond", serif`
+    ctx.font = `900 ${size}px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif`
   }
   return size
 }
@@ -548,7 +548,7 @@ function drawPFPFrame(ctx: CanvasRenderingContext2D, W: number, H: number, data:
 
   // 4. "HACKER HOUSE" heading — big yellow serif
   ctx.save()
-  ctx.font = '900 92px "Cormorant Garamond", "Georgia", serif'
+  ctx.font = '900 92px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif'
   ctx.fillStyle = yellow
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
