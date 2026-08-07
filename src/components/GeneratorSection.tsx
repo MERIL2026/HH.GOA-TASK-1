@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, CheckCircle, Wand2, Download, RefreshCw, User, Code2, Trophy } from 'lucide-react'
+import { Upload, X, CheckCircle, Wand2, Download, RefreshCw, User, MapPin, Users, BookOpen, AlignRight } from 'lucide-react'
 import CardCanvas from './CardCanvas'
 import type { GeneratorMode, BuilderData } from '../types'
 import './GeneratorSection.css'
@@ -17,6 +17,10 @@ export default function GeneratorSection() {
   const [builderData, setBuilderData] = useState<BuilderData>({
     name: '',
     role: '',
+    groupNo: '',
+    headerTitle: '',
+    sideText: '',
+    location: '',
     stack: '',
     cardType: 'id-card',
     imageUrl: null,
@@ -82,7 +86,7 @@ export default function GeneratorSection() {
   }
 
   const handleReset = () => {
-    setBuilderData({ name: '', role: '', stack: '', cardType: 'id-card', imageUrl: null })
+    setBuilderData({ name: '', role: '', groupNo: '', headerTitle: '', sideText: '', location: '', stack: '', cardType: 'id-card', imageUrl: null })
     setMode('upload')
     setError(null)
   }
@@ -191,6 +195,8 @@ export default function GeneratorSection() {
 
                 {/* Form fields */}
                 <div className="generator__form-fields">
+
+                  {/* Name */}
                   <div className="form-group">
                     <label className="form-label">
                       <User size={14} />
@@ -199,42 +205,95 @@ export default function GeneratorSection() {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Arjun Mehta"
+                      placeholder="e.g. NAMA ANGGOTA"
                       value={builderData.name}
                       onChange={e => setBuilderData(prev => ({ ...prev, name: e.target.value }))}
                       maxLength={30}
                     />
                   </div>
 
+                  {/* Role / Title (bottom-left footer label) */}
                   <div className="form-group">
                     <label className="form-label">
-                      <Code2 size={14} />
-                      Tech Stack / Role
-                      <span className="form-optional">optional</span>
+                      <BookOpen size={14} />
+                      Role / Title
+                      <span className="form-optional">e.g. KETUA</span>
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Full Stack · Web3 · AI"
-                      value={builderData.stack}
-                      onChange={e => setBuilderData(prev => ({ ...prev, stack: e.target.value }))}
-                      maxLength={40}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Trophy size={14} />
-                      Builder Title
-                      <span className="form-optional">optional</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. The Architect"
+                      placeholder="e.g. KETUA"
                       value={builderData.role}
                       onChange={e => setBuilderData(prev => ({ ...prev, role: e.target.value }))}
                       maxLength={30}
+                    />
+                  </div>
+
+                  {/* Group Number */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Users size={14} />
+                      Group / Batch Number
+                      <span className="form-optional">optional</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. KELOMPOK 76"
+                      value={builderData.groupNo}
+                      onChange={e => setBuilderData(prev => ({ ...prev, groupNo: e.target.value }))}
+                      maxLength={30}
+                    />
+                  </div>
+
+                  {/* Main Headline (e.g. KKN 2026 / HH GOA 2026) */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Wand2 size={14} />
+                      Card Headline
+                      <span className="form-optional">optional</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. HH GOA 2026"
+                      value={builderData.headerTitle}
+                      onChange={e => setBuilderData(prev => ({ ...prev, headerTitle: e.target.value }))}
+                      maxLength={20}
+                    />
+                  </div>
+
+                  {/* Vertical Side Text */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <AlignRight size={14} />
+                      Vertical Side Text
+                      <span className="form-optional">optional</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. UNIVERSITAS NEGERI"
+                      value={builderData.sideText}
+                      onChange={e => setBuilderData(prev => ({ ...prev, sideText: e.target.value }))}
+                      maxLength={30}
+                    />
+                  </div>
+
+                  {/* Location / Department */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <MapPin size={14} />
+                      Location / Department
+                      <span className="form-optional">optional</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. DESA KECAMATAN KABUPATEN"
+                      value={builderData.location}
+                      onChange={e => setBuilderData(prev => ({ ...prev, location: e.target.value }))}
+                      maxLength={40}
                     />
                   </div>
 
