@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, CheckCircle, Wand2, Download, RefreshCw, User, MapPin, Users, BookOpen, AlignRight } from 'lucide-react'
+import { Upload, X, CheckCircle, Wand2, Download, RefreshCw, User, BookOpen, GraduationCap, Phone, Hash, Calendar, Tag } from 'lucide-react'
 import CardCanvas from './CardCanvas'
 import type { GeneratorMode, BuilderData } from '../types'
 import './GeneratorSection.css'
@@ -15,13 +15,14 @@ export default function GeneratorSection() {
   const [error, setError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
   const [builderData, setBuilderData] = useState<BuilderData>({
-    name: '',
-    role: '',
-    groupNo: '',
-    headerTitle: '',
-    sideText: '',
-    location: '',
-    stack: '',
+    name: 'EKLAVYA DILIP JHA',
+    titleBadge: 'Full-Moon Merge Monk',
+    role: 'Frontend + AI Developer',
+    college: 'Gandhinagar University',
+    phone: '....91',
+    builderNo: '108',
+    totalBuilders: '247',
+    dates: 'OPEN TRIALS · OCT 28–31',
     cardType: 'id-card',
     imageUrl: null,
   })
@@ -64,7 +65,7 @@ export default function GeneratorSection() {
 
   const handleGenerate = async () => {
     setGenerating(true)
-    await new Promise(r => setTimeout(r, 1800))
+    await new Promise(r => setTimeout(r, 1600))
     setGenerating(false)
     setMode('preview')
   }
@@ -81,12 +82,23 @@ export default function GeneratorSection() {
 
   const handleShareX = () => {
     const name = builderData.name ? `${builderData.name} ` : ''
-    const text = encodeURIComponent(`${name}just generated my @HackerHouseGoa 2026 Builder Identity! 🏗️🌴 #FrameInGoa #HHGoa2026`)
+    const text = encodeURIComponent(`${name}just generated my official @HackerHouseGoa 2026 Builder Ticket! 🏗️🌴 #FrameInGoa #HHGoa2026`)
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
   }
 
   const handleReset = () => {
-    setBuilderData({ name: '', role: '', groupNo: '', headerTitle: '', sideText: '', location: '', stack: '', cardType: 'id-card', imageUrl: null })
+    setBuilderData({
+      name: '',
+      titleBadge: '',
+      role: '',
+      college: '',
+      phone: '',
+      builderNo: '108',
+      totalBuilders: '247',
+      dates: 'OPEN TRIALS · OCT 28–31',
+      cardType: 'id-card',
+      imageUrl: null,
+    })
     setMode('upload')
     setError(null)
   }
@@ -96,16 +108,15 @@ export default function GeneratorSection() {
       <div className="container">
         {/* Header */}
         <div className="generator__header">
-          <span className="badge badge-green">
+          <span className="badge badge-yellow">
             <Wand2 size={12} />
-            Builder Identity Generator
+            Official Builder Ticket Generator
           </span>
-          <h2 className="display-medium">
-            Create Your{' '}
-            <span className="gradient-text-green">Builder ID</span>
+          <h2 className="display-medium" style={{ color: 'var(--hh-cream)' }}>
+            Create Your <span style={{ color: 'var(--hh-sun-yellow)' }}>Builder Ticket</span>
           </h2>
           <p className="body-lg generator__subtitle">
-            Free. No login. Instant results.
+            Free. No login required. Instant official export.
           </p>
         </div>
 
@@ -128,7 +139,7 @@ export default function GeneratorSection() {
         </div>
 
         {/* Main Panel */}
-        <div className="generator__panel glass-card">
+        <div className="generator__panel panel-paper">
 
           {/* STEP 1: Upload */}
           {mode === 'upload' && (
@@ -151,7 +162,7 @@ export default function GeneratorSection() {
                   <Upload size={32} />
                 </div>
                 <h3 className="upload-zone__title">Drop your photo here</h3>
-                <p className="upload-zone__subtitle">or click to browse</p>
+                <p className="upload-zone__subtitle">or click to browse from device</p>
                 <div className="upload-zone__formats">
                   {['JPG', 'PNG', 'HEIC'].map(f => (
                     <span key={f} className="upload-zone__format">{f}</span>
@@ -173,7 +184,7 @@ export default function GeneratorSection() {
               )}
 
               <div className="upload-note">
-                <p>📸 Works best with portrait photos. Any aspect ratio accepted — we'll crop smartly.</p>
+                <p>📸 Portrait photos work best. Automatically fitted to the official sunburst ticket frame.</p>
               </div>
             </div>
           )}
@@ -200,112 +211,140 @@ export default function GeneratorSection() {
                   <div className="form-group">
                     <label className="form-label">
                       <User size={14} />
-                      Your Name
+                      Full Name
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. NAMA ANGGOTA"
+                      placeholder="e.g. Eklavya Dilip Jha"
                       value={builderData.name}
                       onChange={e => setBuilderData(prev => ({ ...prev, name: e.target.value }))}
+                      maxLength={32}
+                    />
+                  </div>
+
+                  {/* Fun Title Badge */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Tag size={14} />
+                      Builder Title / Badge
+                      <span className="form-optional">e.g. Full-Moon Merge Monk</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Full-Moon Merge Monk"
+                      value={builderData.titleBadge}
+                      onChange={e => setBuilderData(prev => ({ ...prev, titleBadge: e.target.value }))}
                       maxLength={30}
                     />
                   </div>
 
-                  {/* Role / Title (bottom-left footer label) */}
+                  {/* Role */}
                   <div className="form-group">
                     <label className="form-label">
                       <BookOpen size={14} />
-                      Role / Title
-                      <span className="form-optional">e.g. KETUA</span>
+                      Role
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. KETUA"
+                      placeholder="e.g. Frontend + AI Developer"
                       value={builderData.role}
                       onChange={e => setBuilderData(prev => ({ ...prev, role: e.target.value }))}
-                      maxLength={30}
+                      maxLength={35}
                     />
                   </div>
 
-                  {/* Group Number */}
+                  {/* College / Organization */}
                   <div className="form-group">
                     <label className="form-label">
-                      <Users size={14} />
-                      Group / Batch Number
-                      <span className="form-optional">optional</span>
+                      <GraduationCap size={14} />
+                      College / Organization
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. KELOMPOK 76"
-                      value={builderData.groupNo}
-                      onChange={e => setBuilderData(prev => ({ ...prev, groupNo: e.target.value }))}
-                      maxLength={30}
+                      placeholder="e.g. Gandhinagar University"
+                      value={builderData.college}
+                      onChange={e => setBuilderData(prev => ({ ...prev, college: e.target.value }))}
+                      maxLength={35}
                     />
                   </div>
 
-                  {/* Main Headline (e.g. KKN 2026 / HH GOA 2026) */}
+                  {/* Phone / Contact */}
                   <div className="form-group">
                     <label className="form-label">
-                      <Wand2 size={14} />
-                      Card Headline
-                      <span className="form-optional">optional</span>
+                      <Phone size={14} />
+                      Phone / Handle
+                      <span className="form-optional">e.g. ....91</span>
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. HH GOA 2026"
-                      value={builderData.headerTitle}
-                      onChange={e => setBuilderData(prev => ({ ...prev, headerTitle: e.target.value }))}
+                      placeholder="e.g. ....91"
+                      value={builderData.phone}
+                      onChange={e => setBuilderData(prev => ({ ...prev, phone: e.target.value }))}
                       maxLength={20}
                     />
                   </div>
 
-                  {/* Vertical Side Text */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <AlignRight size={14} />
-                      Vertical Side Text
-                      <span className="form-optional">optional</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. UNIVERSITAS NEGERI"
-                      value={builderData.sideText}
-                      onChange={e => setBuilderData(prev => ({ ...prev, sideText: e.target.value }))}
-                      maxLength={30}
-                    />
+                  {/* Builder Serial Number */}
+                  <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label className="form-label">
+                        <Hash size={14} />
+                        Builder No.
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="108"
+                        value={builderData.builderNo}
+                        onChange={e => setBuilderData(prev => ({ ...prev, builderNo: e.target.value }))}
+                        maxLength={6}
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">
+                        Total Builders
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="247"
+                        value={builderData.totalBuilders}
+                        onChange={e => setBuilderData(prev => ({ ...prev, totalBuilders: e.target.value }))}
+                        maxLength={6}
+                      />
+                    </div>
                   </div>
 
-                  {/* Location / Department */}
+                  {/* Event Dates */}
                   <div className="form-group">
                     <label className="form-label">
-                      <MapPin size={14} />
-                      Location / Department
-                      <span className="form-optional">optional</span>
+                      <Calendar size={14} />
+                      Event Dates Header
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. DESA KECAMATAN KABUPATEN"
-                      value={builderData.location}
-                      onChange={e => setBuilderData(prev => ({ ...prev, location: e.target.value }))}
-                      maxLength={40}
+                      placeholder="OPEN TRIALS · OCT 28–31"
+                      value={builderData.dates}
+                      onChange={e => setBuilderData(prev => ({ ...prev, dates: e.target.value }))}
+                      maxLength={30}
                     />
                   </div>
 
                   {/* Card type selector */}
                   <div className="form-group">
-                    <label className="form-label">Card Type</label>
+                    <label className="form-label">Card Format</label>
                     <div className="card-type-toggle">
                       <button
                         className={`card-type-btn ${builderData.cardType === 'id-card' ? 'active' : ''}`}
                         onClick={() => setBuilderData(prev => ({ ...prev, cardType: 'id-card' }))}
                       >
-                        🪪 Builder ID Card
+                        🪪 Ticket ID Card
                       </button>
                       <button
                         className={`card-type-btn ${builderData.cardType === 'pfp-frame' ? 'active' : ''}`}
@@ -319,23 +358,23 @@ export default function GeneratorSection() {
               </div>
 
               <div className="generator__form-actions">
-                <button className="btn btn-outline" onClick={handleReset}>
+                <button className="btn btn-outline" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={handleReset}>
                   ← Back
                 </button>
                 <button
-                  className="btn btn-primary btn-lg"
+                  className="btn btn-terracotta btn-lg"
                   onClick={handleGenerate}
                   disabled={generating}
                 >
                   {generating ? (
                     <>
                       <div className="spinner" />
-                      Generating...
+                      Generating Ticket...
                     </>
                   ) : (
                     <>
                       <Wand2 size={18} />
-                      Generate My ID
+                      Generate Official Ticket
                     </>
                   )}
                 </button>
@@ -353,14 +392,14 @@ export default function GeneratorSection() {
                 />
               </div>
               <div className="generator__preview-actions">
-                <button className="btn btn-outline" onClick={() => setMode('form')}>
+                <button className="btn btn-outline" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={() => setMode('form')}>
                   ← Edit Details
                 </button>
                 <button className="btn btn-primary btn-lg" onClick={handleDownload}>
                   <Download size={18} />
                   Download PNG
                 </button>
-                <button className="btn btn-ghost btn-lg" onClick={handleShareX}>
+                <button className="btn btn-terracotta btn-lg" onClick={handleShareX}>
                   <span style={{fontWeight:700}}>𝕏</span>
                   Share to X
                 </button>
@@ -373,18 +412,18 @@ export default function GeneratorSection() {
           {mode === 'success' && (
             <div className="generator__success">
               <div className="success-icon animate-scale-in">
-                <CheckCircle size={48} />
+                <CheckCircle size={56} style={{ color: 'var(--hh-forest)' }} />
               </div>
-              <h3 className="heading-lg generator__success-title">You're all set! 🎉</h3>
-              <p className="body-md generator__success-sub">
-                Your Builder ID has been downloaded. Share it on X and inspire the community!
+              <h3 className="display-medium" style={{ color: 'var(--hh-forest-dark)' }}>Ticket Downloaded! 🎉</h3>
+              <p className="body-md generator__success-sub" style={{ color: 'var(--hh-forest)' }}>
+                Your Official Hacker House Goa Builder Ticket is saved. Share it on X and tag #FrameInGoa!
               </p>
               <div className="generator__success-actions">
                 <button className="btn btn-primary btn-lg" onClick={handleShareX}>
                   <span style={{fontWeight:700}}>𝕏</span>
                   Share to X — #FrameInGoa
                 </button>
-                <button className="btn btn-outline" onClick={handleReset}>
+                <button className="btn btn-outline" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={handleReset}>
                   Generate Another
                 </button>
               </div>

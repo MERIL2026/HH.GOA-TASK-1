@@ -3,12 +3,13 @@ export type GeneratorMode = 'upload' | 'form' | 'preview' | 'success'
 
 export interface BuilderData {
   name: string
+  titleBadge: string
   role: string
-  groupNo: string
-  headerTitle: string
-  sideText: string
-  location: string
-  stack: string
+  college: string
+  phone: string
+  builderNo: string
+  totalBuilders: string
+  dates: string
   cardType: CardType
   imageUrl: string | null
 }
