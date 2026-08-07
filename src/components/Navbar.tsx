@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Menu, X, Zap } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import './Navbar.css'
 
 interface NavbarProps {
@@ -8,16 +8,16 @@ interface NavbarProps {
 }
 
 const navLinks = [
-  { id: 'home', label: 'Home' },
+  { id: 'home',         label: 'Home' },
   { id: 'how-it-works', label: 'How It Works' },
-  { id: 'generator', label: 'Generator' },
-  { id: 'roadmap', label: 'Roadmap' },
-  { id: 'community', label: 'Community' },
+  { id: 'generator',    label: 'Generator' },
+  { id: 'roadmap',      label: 'Roadmap' },
+  { id: 'community',    label: 'Community' },
 ]
 
 export default function Navbar({ activeSection, setActiveSection }: NavbarProps) {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled,  setScrolled]  = useState(false)
+  const [menuOpen,  setMenuOpen]  = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40)
@@ -26,8 +26,7 @@ export default function Navbar({ activeSection, setActiveSection }: NavbarProps)
   }, [])
 
   const scrollToSection = (id: string) => {
-    const el = document.getElementById(id)
-    if (el) el.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
     setActiveSection(id)
     setMenuOpen(false)
   }
@@ -35,15 +34,13 @@ export default function Navbar({ activeSection, setActiveSection }: NavbarProps)
   return (
     <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="navbar__inner container-wide">
+
         {/* Logo */}
         <div className="navbar__logo" onClick={() => scrollToSection('home')}>
-          <div className="navbar__logo-icon">
-            <Zap size={16} strokeWidth={2.5} />
+          <div className="navbar__logo-wordmark">
+            HH <span>Goa</span>
           </div>
-          <span className="navbar__logo-text">
-            HH <span className="navbar__logo-accent">Goa</span>
-          </span>
-          <span className="badge badge-green">2026</span>
+          <div className="navbar__logo-year">2026</div>
         </div>
 
         {/* Desktop Links */}
@@ -62,13 +59,13 @@ export default function Navbar({ activeSection, setActiveSection }: NavbarProps)
 
         {/* CTA */}
         <div className="navbar__cta">
-          <button className="btn btn-primary btn-sm" onClick={() => scrollToSection('generator')}>
+          <button onClick={() => scrollToSection('generator')}>
             Generate Your ID →
           </button>
         </div>
 
-        {/* Mobile Menu Button */}
-        <button className="navbar__hamburger" onClick={() => setMenuOpen(!menuOpen)}>
+        {/* Hamburger */}
+        <button className="navbar__hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
@@ -85,7 +82,24 @@ export default function Navbar({ activeSection, setActiveSection }: NavbarProps)
               {link.label}
             </button>
           ))}
-          <button className="btn btn-primary btn-sm" onClick={() => scrollToSection('generator')}>
+          <button
+            style={{
+              marginTop: '12px',
+              fontFamily: 'Space Grotesk, sans-serif',
+              fontWeight: 700,
+              fontSize: '13px',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              background: 'var(--hh-yellow)',
+              color: '#022C19',
+              border: '2px solid var(--hh-yellow)',
+              padding: '12px 24px',
+              cursor: 'pointer',
+              boxShadow: '3px 3px 0 #022C19',
+              width: '100%',
+            }}
+            onClick={() => scrollToSection('generator')}
+          >
             Generate Your ID →
           </button>
         </div>
