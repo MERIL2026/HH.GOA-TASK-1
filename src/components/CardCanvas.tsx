@@ -155,7 +155,7 @@ function drawPosterIDCard(ctx: CanvasRenderingContext2D, W: number, H: number, d
 function drawNameTagAndFooter(
   ctx: CanvasRenderingContext2D,
   W: number,
-  H: number,
+  _H: number,
   data: BuilderData,
   maroon: string,
   darkMaroon: string
@@ -313,7 +313,7 @@ function drawBuildingSilhouette(ctx: CanvasRenderingContext2D, x: number, y: num
 }
 
 // Placeholder Subject Silhouette when no image is uploaded
-function drawPlaceholderSubject(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+function drawPlaceholderSubject(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, _h: number) {
   ctx.save()
   ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'
 
