@@ -1,747 +1,224 @@
-import { forwardRef, useEffect, useRef } from 'react'
+import { useEffect, useRef, forwardRef } from 'react'
+import QRCode from 'qrcode'
 import type { BuilderData } from '../types'
+import JsBarcode from 'jsbarcode'
 
 interface CardCanvasProps {
   builderData: BuilderData
+  onRenderComplete?: (dataUrl: string) => void
 }
 
-const CardCanvas = forwardRef<HTMLCanvasElement, CardCanvasProps>(({ builderData }, ref) => {
-  const internalRef = useRef<HTMLCanvasElement>(null)
-  const canvasRef = (ref as React.RefObject<HTMLCanvasElement>) || internalRef
+// Canvas dimensions — 2:3 ratio matching the 1024×1536 original
+const W = 800
+const H = 1200
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+// Scale factor: 800 / 1024 = 0.78125
+const S = 0.78125
 
-    const W = builderData.cardType === 'pfp-frame' ? 960 : 800
-    const H = builderData.cardType === 'pfp-frame' ? 740 : 1060
-    canvas.width = W
-    canvas.height = H
+// Colors sampled from the original template
+const C = {
+  cream: '#FAF5EB',
+  green: '#113A28',
+  red: '#DA443F',
+  yellow: '#F9B42A',
+  white: '#FFFFFF',
+}
 
-    if (builderData.cardType === 'id-card') {
-      drawOfficialTicketCard(ctx, W, H, builderData)
-    } else {
-      drawPFPFrame(ctx, W, H, builderData)
-    }
-  }, [builderData])
+const FONTS = {
+  sans: 'Space Grotesk, sans-serif',
+  mono: 'JetBrains Mono, monospace',
+}
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ width: '100%', maxWidth: '480px', borderRadius: '8px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
-    />
-  )
-})
+// ==========================================================================
+// COMPONENT
+// ==========================================================================
 
-function drawOfficialTicketCard(ctx: CanvasRenderingContext2D, W: number, H: number, data: BuilderData) {
-  // Official Color Palette
-  const forestGreen = '#044A29'
-  const forestDark = '#03331C'
-  const vintageCream = '#FAF5EB'
-  const sunYellow = '#F4B728'
-  const terracottaRed = '#D9432F'
-  const white = '#FFFFFF'
+export const CardCanvas = forwardRef<HTMLCanvasElement, CardCanvasProps>(
+  ({ builderData, onRenderComplete }, forwardedRef) => {
+    const internalRef = useRef<HTMLCanvasElement>(null)
+    const canvasRef = (forwardedRef as React.RefObject<HTMLCanvasElement>) || internalRef
 
-  // 1. Overall Card Background (Paper Cream)
-  ctx.fillStyle = vintageCream
-  ctx.fillRect(0, 0, W, H)
+    useEffect(() => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
 
-  // 2. Outer Border Frame (Double Green & Terracotta)
-  ctx.strokeStyle = forestGreen
-  ctx.lineWidth = 4
-  ctx.strokeRect(12, 12, W - 24, H - 24)
-  ctx.strokeStyle = terracottaRed
-  ctx.lineWidth = 1.5
-  ctx.strokeRect(18, 18, W - 36, H - 36)
+      let isCancelled = false
 
-  // 3. Top Header Bar (Dark Forest Green)
-  const headerH = 120
-  ctx.fillStyle = forestGreen
-  ctx.fillRect(20, 20, W - 40, headerH)
+      const render = async () => {
+        // 1. Load the cleaned template image with cache buster
+        const templateImg = await loadImage('/card-template-clean.png?v=' + Date.now())
+        if (isCancelled) return
 
-  // Top Header Text: HACKER HOUSE + गोवा
-  ctx.save()
-  ctx.font = '900 42px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif'
-  ctx.fillStyle = white
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('HACKER HOUSE', 48, 60)
+        // 2. Draw template scaled to 800×1200
+        ctx.drawImage(templateImg, 0, 0, W, H)
 
-  // Hindi text "गोवा"
-  ctx.font = '900 40px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif'
-  ctx.fillStyle = sunYellow
-  ctx.fillText('गोवा', 400, 60)
+        // 3. Draw user photo into the circle area
+        await drawUserPhoto(ctx, builderData)
+        if (isCancelled) return
 
-  // Subheader: OPEN TRIALS · OCT 28-31
-  const datesText = (data.dates || 'OPEN TRIALS · OCT 28–31').toUpperCase()
-  ctx.font = '700 13px "Space Mono", monospace'
-  ctx.fillStyle = 'rgba(255,255,255,0.75)'
-  ctx.letterSpacing = '2px'
-  ctx.fillText(datesText, 48, 98)
-  ctx.restore()
+        // 5. Draw all dynamic text, QR code, and barcode
+        await drawDynamicContent(ctx, builderData)
+        if (isCancelled) return
 
-  // Top Right Sun Icon
-  drawSunIcon(ctx, W - 75, 65, 22, sunYellow)
-
-  // Wavy Terracotta Divider Line below Header
-  drawWavyLine(ctx, 20, 20 + headerH, W - 40, terracottaRed)
-
-  // 4. Subtle Palm Tree Watermark Silhouettes on Cream Background
-  drawPalmWatermark(ctx, 45, 650, 110, forestGreen)
-  drawPalmWatermark(ctx, W - 145, 650, 110, forestGreen)
-
-  // 5. Sunburst Ray Graphic (Behind Photo)
-  const sunburstCX = W / 2
-  const sunburstCY = 310
-  const sunburstR = 190
-  drawSunburstGraphic(ctx, sunburstCX, sunburstCY, sunburstR, sunYellow, '#FFF6DB', terracottaRed)
-
-  // Render Photo + Details
-  if (data.imageUrl) {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      ctx.save()
-      // Render user image inside double rounded frame
-      const photoW = 340
-      const photoH = 310
-      const photoX = (W - photoW) / 2
-      const photoY = 160
-
-      // Shadow behind photo frame
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'
-      ctx.shadowBlur = 16
-      ctx.shadowOffsetY = 8
-
-      // Outer Rounded Green Frame
-      ctx.fillStyle = forestGreen
-      roundRectPath(ctx, photoX - 10, photoY - 10, photoW + 20, photoH + 20, 28)
-      ctx.fill()
-      ctx.shadowColor = 'transparent'
-
-      // Inner Terracotta Border
-      ctx.strokeStyle = terracottaRed
-      ctx.lineWidth = 3
-      roundRectPath(ctx, photoX - 4, photoY - 4, photoW + 8, photoH + 8, 22)
-      ctx.stroke()
-
-      // Clip and Draw Photo
-      ctx.beginPath()
-      roundRectPath(ctx, photoX, photoY, photoW, photoH, 18)
-      ctx.clip()
-
-      const aspect = img.width / img.height
-      let sx = 0, sy = 0, sw = img.width, sh = img.height
-      if (aspect > photoW / photoH) {
-        sw = img.height * (photoW / photoH)
-        sx = (img.width - sw) / 2
-      } else {
-        sh = img.width / (photoW / photoH)
-        sy = (img.height - sh) / 2
+        // 6. Notify parent (for lanyard texture)
+        onRenderComplete?.(canvas.toDataURL('image/png', 1.0))
       }
 
-      ctx.drawImage(img, sx, sy, sw, sh, photoX, photoY, photoW, photoH)
-      ctx.restore()
+      render().catch(console.error)
 
-      // Draw User Details & Footer over card
-      drawCardDetailsAndFooter(ctx, W, H, data, forestGreen, forestDark, terracottaRed, sunYellow, white)
-    }
-    img.src = data.imageUrl
-  } else {
-    // Placeholder photo box
-    drawPlaceholderSubject(ctx, (W - 340) / 2, 160, 340, 310, forestGreen, terracottaRed)
-    drawCardDetailsAndFooter(ctx, W, H, data, forestGreen, forestDark, terracottaRed, sunYellow, white)
+      return () => { isCancelled = true }
+    }, [builderData, onRenderComplete, canvasRef])
+
+    return (
+      <canvas
+        ref={canvasRef}
+        width={W}
+        height={H}
+        className="card-canvas-renderer"
+        style={{
+          display: 'block',
+          width: '100%',
+          maxWidth: '480px',
+          borderRadius: '8px',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
+        }}
+      />
+    )
   }
-}
+)
 
-function drawCardDetailsAndFooter(
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  data: BuilderData,
-  forestGreen: string,
-  _forestDark: string,
-  terracottaRed: string,
-  sunYellow: string,
-  white: string
-) {
-  // 6. User Full Name (Centered Serif)
-  const nameText = (data.name || 'EKLAVYA DILIP JHA').toUpperCase()
-  ctx.save()
-  const nameFontSize = fitFontSize(ctx, nameText, W - 120, 52, 28)
-  ctx.font = `900 ${nameFontSize}px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif`
-  ctx.fillStyle = forestGreen
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(nameText, W / 2, 520)
-  ctx.restore()
+export default CardCanvas
 
-  // 7. Fun Title Badge (e.g. "Full-Moon Merge Monk")
-  const badgeText = data.titleBadge || 'Full-Moon Merge Monk'
-  ctx.save()
-  ctx.font = '700 20px "Space Grotesk", sans-serif'
-  const textW = ctx.measureText(badgeText).width
-  const badgeW = Math.max(textW + 36, 220)
-  const badgeH = 42
-  const badgeX = (W - badgeW) / 2
-  const badgeY = 552
+// Placeholders are now removed from the base image itself.
 
-  // Rounded Pill Box
-  ctx.fillStyle = '#FFFDF7'
-  roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, 12)
-  ctx.fill()
-  ctx.strokeStyle = terracottaRed
-  ctx.lineWidth = 2
-  ctx.stroke()
+// ==========================================================================
+// PHOTO — Draw the user's photo clipped to the dashed circle area
+// Original circle: center≈(512, 850), radius≈170
+// Canvas: center≈(400, 664), radius≈133
+// ==========================================================================
 
-  ctx.fillStyle = terracottaRed
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(badgeText, W / 2, badgeY + badgeH / 2)
-  ctx.restore()
-
-  // 8. Dot-Leader Data Fields (ROLE, COLLEGE, PHONE)
-  const fields = [
-    { label: 'ROLE', value: data.role || 'Frontend + AI Developer' },
-    { label: 'COLLEGE', value: data.college || 'Gandhinagar University' },
-    { label: 'PHONE', value: data.phone || '....91' },
-  ]
-
-  let fieldY = 635
-  const startX = 72
-  const endX = W - 72
-
-  fields.forEach(field => {
-    ctx.save()
-    // Field Label
-    ctx.font = '700 13px "Space Mono", monospace'
-    ctx.fillStyle = forestGreen
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(field.label, startX, fieldY)
-
-    const labelWidth = ctx.measureText(field.label).width + 12
-
-    // Field Value
-    ctx.font = '600 15px "Space Grotesk", sans-serif'
-    ctx.fillStyle = forestGreen
-    ctx.textAlign = 'right'
-    const valueWidth = ctx.measureText(field.value).width + 12
-    ctx.fillText(field.value, endX, fieldY)
-
-    // Dotted Connection Line
-    const dotStartX = startX + labelWidth
-    const dotEndX = endX - valueWidth
-    if (dotEndX > dotStartX) {
-      ctx.strokeStyle = 'rgba(4,74,41,0.35)'
-      ctx.lineWidth = 1.5
-      ctx.setLineDash([2, 5])
-      ctx.beginPath()
-      ctx.moveTo(dotStartX, fieldY + 2)
-      ctx.lineTo(dotEndX, fieldY + 2)
-      ctx.stroke()
-    }
-    ctx.restore()
-    fieldY += 38
-  })
-
-  // 9. Builder Serial Badge (e.g. BUILDER #108 / 247)
-  const builderNum = data.builderNo || '108'
-  const totalNum = data.totalBuilders || '247'
-  const serialText = `BUILDER #${builderNum} / ${totalNum}`
-
-  ctx.save()
-  // Left Label
-  ctx.font = '700 11px "Space Mono", monospace'
-  ctx.fillStyle = 'rgba(4,74,41,0.45)'
-  ctx.textAlign = 'left'
-  ctx.fillText('2:47 PM STUDIO', startX, 790)
-
-  // Right Top Sub-label
-  ctx.textAlign = 'right'
-  ctx.fillText(`${totalNum} BUILDERS`, endX, 772)
-
-  // Main Serial Text
-  ctx.font = '900 36px "Space Grotesk", "Arial Black", sans-serif'
-  ctx.fillStyle = forestGreen
-  ctx.fillText(serialText, endX, 804)
-  ctx.restore()
-
-  // 10. Perforation Line of Dots before Footer
-  ctx.save()
-  ctx.fillStyle = forestGreen
-  for (let px = 24; px < W - 24; px += 16) {
-    ctx.beginPath()
-    ctx.arc(px, 835, 3.5, 0, Math.PI * 2)
-    ctx.fill()
-  }
-  ctx.restore()
-
-  // 11. Footer Bar (Dark Forest Green)
-  const footerY = 848
-  const footerH = H - footerY - 20
-  ctx.fillStyle = forestGreen
-  ctx.fillRect(20, footerY, W - 40, footerH)
-
-  // Barcode Graphic (Bottom Left)
-  drawBarcode(ctx, 48, footerY + 18, 120, 32, white)
-  ctx.font = '700 9px "Space Mono", monospace'
-  ctx.fillStyle = 'rgba(255,255,255,0.6)'
-  ctx.textAlign = 'left'
-  ctx.fillText('@247pmstudio', 48, footerY + 62)
-
-  // Center Slogan
-  ctx.font = '700 12px "Space Mono", monospace'
-  ctx.fillStyle = white
-  ctx.textAlign = 'center'
-  ctx.letterSpacing = '2px'
-  ctx.fillText('LESS NOISE. MORE SIGNAL', W / 2, footerY + 36)
-
-  // Right Hashtag
-  ctx.font = '900 16px "Space Grotesk", sans-serif'
-  ctx.fillStyle = sunYellow
-  ctx.textAlign = 'right'
-  ctx.fillText('#FrameInGoa', endX, footerY + 58)
-
-  // Wavy Bottom Line
-  drawWavyLine(ctx, 20, footerY + footerH, W - 40, sunYellow)
-}
-
-// Draw Sunburst Rays Graphic (Behind Photo)
-function drawSunburstGraphic(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  radius: number,
-  color1: string,
-  color2: string,
-  borderColor: string
-) {
-  ctx.save()
-  ctx.beginPath()
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2)
-  ctx.clip()
-
-  const numRays = 18
-  const angleStep = (Math.PI * 2) / numRays
-
-  for (let i = 0; i < numRays; i++) {
-    const startAngle = i * angleStep
-    const endAngle = (i + 1) * angleStep
-    ctx.fillStyle = i % 2 === 0 ? color1 : color2
-    ctx.beginPath()
-    ctx.moveTo(cx, cy)
-    ctx.arc(cx, cy, radius + 20, startAngle, endAngle)
-    ctx.closePath()
-    ctx.fill()
-  }
-  ctx.restore()
-
-  // Border ring around sunburst
-  ctx.save()
-  ctx.beginPath()
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2)
-  ctx.strokeStyle = borderColor
-  ctx.lineWidth = 2
-  ctx.stroke()
-  ctx.restore()
-}
-
-// Draw Sun Icon (Top Right)
-function drawSunIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string) {
-  ctx.save()
-  ctx.fillStyle = color
-  ctx.strokeStyle = color
-  ctx.lineWidth = 3
-
-  // Center circle
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, 0, Math.PI * 2)
-  ctx.fill()
-
-  // Rays
-  const rayLen = 10
-  for (let i = 0; i < 8; i++) {
-    const angle = (i * Math.PI) / 4
-    const x1 = cx + Math.cos(angle) * (r + 4)
-    const y1 = cy + Math.sin(angle) * (r + 4)
-    const x2 = cx + Math.cos(angle) * (r + 4 + rayLen)
-    const y2 = cy + Math.sin(angle) * (r + 4 + rayLen)
-    ctx.beginPath()
-    ctx.moveTo(x1, y1)
-    ctx.lineTo(x2, y2)
-    ctx.stroke()
-  }
-  ctx.restore()
-}
-
-// Draw Wavy Zigzag Line
-function drawWavyLine(ctx: CanvasRenderingContext2D, x1: number, y: number, x2: number, color: string) {
-  ctx.save()
-  ctx.strokeStyle = color
-  ctx.lineWidth = 2.5
-  ctx.beginPath()
-
-  const wavelength = 16
-  const amplitude = 3.5
-  let toggle = 1
-
-  ctx.moveTo(x1, y)
-  for (let x = x1; x <= x2; x += wavelength / 2) {
-    ctx.lineTo(x, y + toggle * amplitude)
-    toggle = -toggle
-  }
-  ctx.stroke()
-  ctx.restore()
-}
-
-// Draw Palm Watermark Silhouettes
-function drawPalmWatermark(ctx: CanvasRenderingContext2D, x: number, y: number, h: number, color: string) {
-  ctx.save()
-  ctx.strokeStyle = color
-  ctx.fillStyle = color
-  ctx.globalAlpha = 0.07
-
-  // Curved Trunk
-  ctx.lineWidth = 6
-  ctx.beginPath()
-  ctx.moveTo(x, y)
-  ctx.quadraticCurveTo(x + 20, y - h / 2, x + 10, y - h)
-  ctx.stroke()
-
-  // Fronds / Leaves
-  const topX = x + 10
-  const topY = y - h
-  ctx.lineWidth = 3
-  for (let i = 0; i < 5; i++) {
-    const angle = -Math.PI / 4 - (i * Math.PI) / 6
-    const lx = topX + Math.cos(angle) * 45
-    const ly = topY + Math.sin(angle) * 45
-    ctx.beginPath()
-    ctx.moveTo(topX, topY)
-    ctx.quadraticCurveTo(topX + Math.cos(angle) * 20, topY + Math.sin(angle) * 20 - 10, lx, ly)
-    ctx.stroke()
-  }
-  ctx.restore()
-}
-
-// Draw Barcode Graphic
-function drawBarcode(ctx: CanvasRenderingContext2D, x: number, y: number, _w: number, h: number, color: string) {
-  ctx.save()
-  ctx.fillStyle = color
-  const bars = [3, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 1, 3, 2]
-  let currentX = x
-  bars.forEach(bw => {
-    ctx.fillRect(currentX, y, bw, h)
-    currentX += bw + 3
-  })
-  ctx.restore()
-}
-
-// Placeholder Subject Frame
-function drawPlaceholderSubject(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  green: string,
-  red: string
-) {
-  ctx.save()
-  // Outer Green Frame
-  ctx.fillStyle = green
-  roundRectPath(ctx, x - 10, y - 10, w + 20, h + 20, 28)
-  ctx.fill()
-
-  // Inner Red Border
-  ctx.strokeStyle = red
-  ctx.lineWidth = 3
-  roundRectPath(ctx, x - 4, y - 4, w + 8, h + 8, 22)
-  ctx.stroke()
-
-  // Inner Cream Fill
-  ctx.fillStyle = 'rgba(254, 252, 245, 0.9)'
-  roundRectPath(ctx, x, y, w, h, 18)
-  ctx.fill()
-
-  // Head & Shoulder Silhouette
-  ctx.fillStyle = 'rgba(4, 74, 41, 0.2)'
-  ctx.beginPath()
-  ctx.arc(x + w / 2, y + 120, 65, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.beginPath()
-  ctx.ellipse(x + w / 2, y + 320, 130, 150, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-}
-
-// Helper: Fit font size dynamically to width
-function fitFontSize(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, startSize: number, minSize: number): number {
-  let size = startSize
-  ctx.font = `900 ${size}px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif`
-  while (ctx.measureText(text).width > maxWidth && size > minSize) {
-    size -= 1
-    ctx.font = `900 ${size}px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif`
-  }
-  return size
-}
-
-// Helper: Rounded Rectangle Path
-function roundRectPath(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number,
-  r: number
-) {
-  ctx.beginPath()
-  ctx.moveTo(x + r, y)
-  ctx.lineTo(x + w - r, y)
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-  ctx.lineTo(x + w, y + h - r)
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-  ctx.lineTo(x + r, y + h)
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-  ctx.lineTo(x, y + r)
-  ctx.quadraticCurveTo(x, y, x + r, y)
-  ctx.closePath()
-}
-
-// ============================
-// PFP FRAME — Hacker House Goa Reference Style
-// Landscape canvas, big yellow serif heading, thick yellow ring,
-// pink side badges, dashed accents, vertical hashtag, GOA/2026 pill
-// ============================
-function drawPFPFrame(ctx: CanvasRenderingContext2D, W: number, H: number, data: BuilderData) {
-  const forest    = '#044A29'
-  const yellow    = '#F4B728'
-  const pink      = '#FF2D8D'
-  const darkGreen = '#033620'
-
-  // 1. Background fill (deep forest green)
-  ctx.fillStyle = forest
-  ctx.fillRect(0, 0, W, H)
-
-  // 2. Subtle grid line texture
-  ctx.save()
-  ctx.strokeStyle = 'rgba(244,183,40,0.06)'
-  ctx.lineWidth = 1
-  const gridGap = 50
-  for (let gx = 0; gx < W; gx += gridGap) {
-    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke()
-  }
-  for (let gy = 0; gy < H; gy += gridGap) {
-    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke()
-  }
-  ctx.restore()
-
-  // 3. Thin top ornament (centered tick + horizontal bars)
-  ctx.save()
-  ctx.strokeStyle = yellow
-  ctx.lineWidth = 2
-  const tickX = W / 2
-  ctx.beginPath(); ctx.moveTo(tickX - 30, 28); ctx.lineTo(tickX - 4, 28); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(tickX + 4, 28); ctx.lineTo(tickX + 30, 28); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(tickX, 18); ctx.lineTo(tickX, 36); ctx.stroke()
-  ctx.restore()
-
-  // 4. "HACKER HOUSE" heading — big yellow serif
-  ctx.save()
-  ctx.font = '900 92px "Canela", "Canela Display", "Cinzel Decorative", "Bodoni Moda", "Cinzel", "Cormorant Garamond", serif'
-  ctx.fillStyle = yellow
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'top'
-  ctx.fillText('HACKER HOUSE', W / 2, 44)
-  ctx.restore()
-
-  // 5. Circle photo frame
-  const cx = W / 2
-  const cy = H / 2 + 40   // shift circle down slightly so heading has breathing room
-  const r  = Math.min(W, H) * 0.36
+async function drawUserPhoto(ctx: CanvasRenderingContext2D, data: BuilderData) {
+  const cx = 400
+  const cy = 652
+  const r = 139
 
   if (data.imageUrl) {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => {
+    try {
+      const img = await loadImage(data.imageUrl)
       ctx.save()
       ctx.beginPath()
       ctx.arc(cx, cy, r, 0, Math.PI * 2)
       ctx.clip()
+
+      // Cover-fit the image into the circle
       const aspect = img.width / img.height
       let sx = 0, sy = 0, sw = img.width, sh = img.height
-      if (aspect > 1) { sw = img.height; sx = (img.width - sw) / 2 }
-      else            { sh = img.width;  sy = (img.height - sh) / 2 }
+      if (aspect > 1) {
+        sw = img.height
+        sx = (img.width - img.height) / 2
+      } else {
+        sh = img.width
+        sy = (img.height - img.width) / 2
+      }
       ctx.drawImage(img, sx, sy, sw, sh, cx - r, cy - r, r * 2, r * 2)
       ctx.restore()
-      drawPFPDecoration(ctx, W, H, cx, cy, r, data, forest, yellow, pink, darkGreen)
+    } catch (e) {
+      drawFallbackAvatar(ctx, cx, cy, r)
     }
-    img.src = data.imageUrl
   } else {
-    // Placeholder
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.fillStyle = 'rgba(244,183,40,0.10)'
-    ctx.fill()
-    ctx.restore()
-    drawPFPDecoration(ctx, W, H, cx, cy, r, data, forest, yellow, pink, darkGreen)
+    drawFallbackAvatar(ctx, cx, cy, r)
   }
 }
 
-function drawPFPDecoration(
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  cx: number,
-  cy: number,
-  r: number,
-  data: BuilderData,
-  forest: string,
-  yellow: string,
-  pink: string,
-  darkGreen: string
-) {
-  // 6. Thick yellow outer ring
-  ctx.save()
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, 0, Math.PI * 2)
-  ctx.strokeStyle = yellow
-  ctx.lineWidth = 18
-  ctx.stroke()
-  ctx.restore()
+function drawFallbackAvatar(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  // Do nothing. The base card-template-clean.png already has a perfectly blank white circle.
+  // This fulfills the requirement to just show the blank template if no photo is uploaded.
+}
 
-  // 7. Decorative pink accent dashes on the ring (top-left & top-right arcs)
-  const dashAngles = [
-    { start: -Math.PI * 0.95, end: -Math.PI * 0.80 },  // top-left dash
-    { start: -Math.PI * 0.20, end: -Math.PI * 0.05 },  // top-right dash
-  ]
-  dashAngles.forEach(({ start, end }) => {
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(cx, cy, r, start, end)
-    ctx.strokeStyle = pink
-    ctx.lineWidth = 18
-    ctx.stroke()
-    ctx.restore()
-  })
+// ==========================================================================
+// DYNAMIC CONTENT — Text, QR code, barcode
+// ==========================================================================
 
-  // 8. Left side pink badge pill — "HH"
-  const leftBadgeX = cx - r - 8
-  const leftBadgeY = cy
-  drawPillBadge(ctx, leftBadgeX, leftBadgeY, 52, 52, 26, pink, 'HH', '#fff')
-
-  // 9. Right side pink badge pill — "26" (year)
-  const rightBadgeX = cx + r + 8
-  const rightBadgeY = cy
-  drawPillBadge(ctx, rightBadgeX, rightBadgeY, 52, 52, 26, pink, '26', '#fff')
-
-  // 10. Vertical "#FRAMEINGOA" text on the left edge
-  ctx.save()
-  ctx.translate(26, H / 2 + 60)
-  ctx.rotate(-Math.PI / 2)
-  ctx.font = '700 12px "Space Mono", monospace'
-  ctx.fillStyle = 'rgba(244,183,40,0.55)'
-  ctx.textAlign = 'center'
-  ctx.letterSpacing = '3px'
-  ctx.fillText('#FRAMEINGOA', 0, 0)
-  ctx.restore()
-
-  // 11. "2:47PM STUDIO" badge — dark green rounded box, bottom-right inside circle
-  const studioX = cx + r * 0.3
-  const studioY = cy + r * 0.5
-  const stuW = 130
-  const stuH = 58
-  ctx.save()
-  ctx.fillStyle = darkGreen
-  roundRectPath(ctx, studioX - stuW / 2, studioY - stuH / 2, stuW, stuH, 10)
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(244,183,40,0.3)'
-  ctx.lineWidth = 1.5
-  ctx.stroke()
-
+async function drawDynamicContent(ctx: CanvasRenderingContext2D, data: BuilderData) {
+  // 1. Role text on yellow ribbon
+  ctx.font = `900 13px ${FONTS.sans}`
+  ctx.fillStyle = C.green
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = '900 22px "Space Grotesk", sans-serif'
-  ctx.fillStyle = yellow
-  ctx.fillText('2:47', studioX, studioY - 8)
-  ctx.font = '700 12px "Space Mono", monospace'
-  ctx.fillText('PM  STUDIO', studioX, studioY + 14)
-  ctx.restore()
+  const roleText = (data.role || data.name || 'FULL STACK DEVELOPER').toUpperCase()
+  ctx.fillText(roleText, 400, 882)
 
-  // 12. Bottom "GOA / 2026" rounded pill
-  const pillW = 280
-  const pillH = 62
-  const pillX = cx - pillW / 2
-  const pillY = cy + r + 20
-  ctx.save()
-  ctx.fillStyle = darkGreen
-  roundRectPath(ctx, pillX, pillY, pillW, pillH, 31)
-  ctx.fill()
-  ctx.strokeStyle = yellow
-  ctx.lineWidth = 2.5
-  ctx.stroke()
+  // 2. Badge values (red text under each icon)
+  // Original: y≈1252 → canvas y≈978
+  ctx.font = `900 11px ${FONTS.sans}`
+  ctx.fillStyle = C.red
+  const classText = (data.builderClass || 'TERMINAL WIZARD').toUpperCase()
+  ctx.fillStyle = '#1D7A44' // Green for coconut
+  const bagText = (data.beachBag || 'COCONUT · VS CODE').toUpperCase()
+  ctx.fillStyle = '#E35A24' // Orange for shipping
+  const shipText = (data.shipping || 'BUILDING THE FUTURE').toUpperCase()
 
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = '900 30px "Space Grotesk", sans-serif'
-  ctx.fillStyle = yellow
-  const yearLabel = data.dates ? data.dates.split('·')[0]?.trim() : `GOA  /  2026`
-  ctx.fillText(yearLabel.toUpperCase() || 'GOA  /  2026', cx, pillY + pillH / 2)
-  ctx.restore()
+  // Draw them
+  ctx.fillStyle = C.red
+  ctx.fillText(classText.length > 18 ? classText.slice(0, 16) + '…' : classText, 170, 980)
+  ctx.fillStyle = '#1D7A44'
+  ctx.fillText(bagText.length > 18 ? bagText.slice(0, 16) + '…' : bagText, 400, 980)
+  ctx.fillStyle = '#E35A24'
+  ctx.fillText(shipText.length > 18 ? shipText.slice(0, 16) + '…' : shipText, 610, 980)
 
-  // 13. Name text below pill (if provided)
-  if (data.name) {
-    ctx.save()
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.font = '700 18px "Space Grotesk", sans-serif'
-    ctx.fillStyle = 'rgba(250,245,235,0.75)'
-    ctx.fillText(data.name.toUpperCase(), cx, pillY + pillH + 28)
-    ctx.restore()
-  }
-
-  // 14. Bottom hashtag watermark
-  ctx.save()
-  ctx.textAlign = 'right'
-  ctx.textBaseline = 'bottom'
-  ctx.font = '700 13px "Space Mono", monospace'
-  ctx.fillStyle = pink
-  ctx.fillText('#FrameInGoa', W - 28, H - 18)
-  ctx.restore()
-
-  // 15. Tiny "Hacker House Goa 2026" watermark bottom-left
-  ctx.save()
+  // 3. ID Number
+  const idNumber = data.builderNo || `HHGOA26-${Math.floor(1000 + Math.random() * 9000)}`
+  ctx.font = `900 20px ${FONTS.sans}`
+  ctx.fillStyle = C.red // The ID string should be red
   ctx.textAlign = 'left'
-  ctx.textBaseline = 'bottom'
-  ctx.font = '600 11px "Space Mono", monospace'
-  ctx.fillStyle = 'rgba(244,183,40,0.40)'
-  ctx.fillText('HACKER HOUSE GOA 2026', 28, H - 18)
-  ctx.restore()
+  ctx.textBaseline = 'top'
+  ctx.fillText(idNumber, 280, 1075)
 
-  // 16. Suppress unused forest param warning
-  void forest
+  // 4. QR Code
+  // Original: QR inner at x≈148..270, y≈1360..1470
+  // Canvas: x≈116..211, y≈1062..1148
+  try {
+    const qrDataUrl = await QRCode.toDataURL(idNumber, {
+      width: 95,
+      margin: 0,
+      color: { dark: C.green, light: C.white },
+    })
+    const qrImg = await loadImage(qrDataUrl)
+    ctx.drawImage(qrImg, 111, 1027, 118, 118)
+  } catch (e) {
+    console.error('QR Generation failed', e)
+  }
+
+  // 5. Barcode
+  try {
+    const barcodeCanvas = document.createElement('canvas')
+    JsBarcode(barcodeCanvas, idNumber, {
+      format: 'CODE128',
+      displayValue: false,
+      width: 1.5,
+      height: 22,
+      lineColor: C.green,
+      background: C.cream,
+      margin: 0,
+    })
+    ctx.drawImage(barcodeCanvas, 280, 1105, 250, 24)
+  } catch (e) {
+    console.error('Barcode generation failed', e)
+  }
 }
 
-// Helper: draw a circular/square pill badge centered at (cx, cy)
-function drawPillBadge(
-  ctx: CanvasRenderingContext2D,
-  cx: number, cy: number,
-  w: number, h: number, radius: number,
-  bg: string, label: string, textColor: string
-) {
-  ctx.save()
-  ctx.fillStyle = bg
-  roundRectPath(ctx, cx - w / 2, cy - h / 2, w, h, radius)
-  ctx.fill()
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = '900 18px "Space Grotesk", sans-serif'
-  ctx.fillStyle = textColor
-  ctx.fillText(label, cx, cy)
-  ctx.restore()
+// ==========================================================================
+// UTILITY
+// ==========================================================================
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = src
+  })
 }
-
-CardCanvas.displayName = 'CardCanvas'
-
-export default CardCanvas

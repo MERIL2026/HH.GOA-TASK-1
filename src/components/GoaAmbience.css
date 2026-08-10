@@ -1,0 +1,128 @@
+/* ============================
+   GLOBAL GOA AMBIENCE LAYER
+   Fixed background — tropical paradise feel
+============================= */
+.goa-ambience {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Sunset horizon gradient */
+.goa-ambience__horizon {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(244, 183, 40, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(217, 67, 47, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 10% 30%, rgba(244, 183, 40, 0.04) 0%, transparent 45%);
+}
+
+/* Ocean shimmer at bottom */
+.goa-ambience__ocean {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 180px;
+  overflow: hidden;
+  opacity: 0.35;
+}
+
+.goa-ambience__ocean-wave {
+  position: absolute;
+  bottom: 0;
+  left: -10%;
+  width: 120%;
+  height: 60px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(244, 183, 40, 0.06) 40%,
+    rgba(4, 74, 41, 0.15) 100%
+  );
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+.goa-ambience__ocean-wave--1 { animation: oceanDrift 8s ease-in-out infinite; opacity: 0.6; }
+.goa-ambience__ocean-wave--2 { animation: oceanDrift 11s ease-in-out infinite reverse; bottom: 10px; opacity: 0.4; height: 45px; }
+.goa-ambience__ocean-wave--3 { animation: oceanDrift 14s ease-in-out infinite; bottom: 20px; opacity: 0.25; height: 35px; }
+
+/* Floating tropical emoji particles */
+.goa-ambience__particles {
+  position: absolute;
+  inset: 0;
+}
+
+.goa-ambience__particle {
+  position: absolute;
+  opacity: 0.12;
+  animation: tropicalFloat linear infinite;
+  filter: blur(0.3px);
+  user-select: none;
+}
+
+/* Firefly sparkles */
+.goa-ambience__fireflies {
+  position: absolute;
+  inset: 0;
+}
+
+.goa-ambience__firefly {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--hh-sun-yellow);
+  box-shadow: 0 0 6px 2px rgba(244, 183, 40, 0.5);
+  animation: fireflyPulse ease-in-out infinite;
+  opacity: 0;
+}
+
+/* Ambient glow orbs */
+.goa-ambience__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+}
+
+.goa-ambience__orb--sun {
+  top: 5%;
+  right: 10%;
+  width: 350px;
+  height: 350px;
+  background: rgba(244, 183, 40, 0.06);
+}
+
+.goa-ambience__orb--coral {
+  top: 40%;
+  left: 5%;
+  width: 280px;
+  height: 280px;
+  background: rgba(217, 67, 47, 0.05);
+}
+
+.goa-ambience__orb--sea {
+  bottom: 15%;
+  right: 25%;
+  width: 400px;
+  height: 400px;
+  background: rgba(4, 74, 41, 0.08);
+}
+
+@media (max-width: 768px) {
+  .goa-ambience__particles { opacity: 0.6; }
+  .goa-ambience__particle { opacity: 0.08; }
+  .goa-ambience__fireflies { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goa-ambience__particle,
+  .goa-ambience__firefly,
+  .goa-ambience__ocean-wave,
+  .goa-ambience__orb {
+    animation: none !important;
+  }
+}

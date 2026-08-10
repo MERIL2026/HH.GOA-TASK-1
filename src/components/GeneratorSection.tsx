@@ -1,6 +1,9 @@
-import { useState, useRef, useCallback } from 'react'
-import { Upload, X, CheckCircle, Wand2, Download, RefreshCw, User, BookOpen, GraduationCap, Phone, Hash, Calendar, Tag } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
+import { Upload, X, CheckCircle, Wand2, Download, RefreshCw, User, BookOpen, GraduationCap, Phone, Hash, Calendar, Tag, Code, Coffee, Truck, Camera, Video, VideoOff } from 'lucide-react'
 import CardCanvas from './CardCanvas'
+import Lanyard from './lanyard/Lanyard'
+import LanyardErrorBoundary from './lanyard/LanyardErrorBoundary'
+import { generateBuilderId } from '../hooks/useQRCode'
 import type { GeneratorMode, BuilderData } from '../types'
 import './GeneratorSection.css'
 
@@ -14,20 +17,117 @@ export default function GeneratorSection() {
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [lanyardCardImage, setLanyardCardImage] = useState<string | null>(null)
+  const [previewTab, setPreviewTab] = useState<'3d' | '2d'>('3d')
+
+  // Camera states
+  const [cameraOpen, setCameraOpen] = useState(false)
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const cameraCanvasRef = useRef<HTMLCanvasElement>(null)
+
   const [builderData, setBuilderData] = useState<BuilderData>({
-    name: 'EKLAVYA DILIP JHA',
-    titleBadge: 'Full-Moon Merge Monk',
-    role: 'Frontend + AI Developer',
-    college: 'Gandhinagar University',
-    phone: '....91',
-    builderNo: '108',
+    name: '',
+    titleBadge: '',
+    role: '',
+    college: '',
+    phone: '',
+    builderNo: '',
     totalBuilders: '247',
-    dates: 'OPEN TRIALS · OCT 28–31',
+    dates: '28 OCT – 31 OCT 2026',
     cardType: 'id-card',
     imageUrl: null,
+    builderClass: '',
+    beachBag: '',
+    shipping: '',
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // Auto-generate unique Builder ID whenever name or phone changes
+  useEffect(() => {
+    const id = generateBuilderId(builderData.name, builderData.phone)
+    setBuilderData(prev => {
+      if (prev.builderNo === id) return prev
+      return { ...prev, builderNo: id }
+    })
+  }, [builderData.name, builderData.phone])
+
+  // Camera: Start stream
+  const startCamera = useCallback(async (mode: 'user' | 'environment' = 'user') => {
+    setCameraError(null)
+    try {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop())
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      })
+      setCameraStream(stream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.play()
+      }
+    } catch (err: any) {
+      setCameraError('Camera access denied. Please allow camera permission and try again.')
+    }
+  }, [cameraStream])
+
+  const openCamera = useCallback(async () => {
+    setCameraOpen(true)
+    await startCamera(facingMode)
+  }, [facingMode, startCamera])
+
+  const closeCamera = useCallback(() => {
+    if (cameraStream) cameraStream.getTracks().forEach(t => t.stop())
+    setCameraStream(null)
+    setCameraOpen(false)
+    setCameraError(null)
+  }, [cameraStream])
+
+  const flipCamera = useCallback(async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user'
+    setFacingMode(newMode)
+    await startCamera(newMode)
+  }, [facingMode, startCamera])
+
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || !cameraCanvasRef.current) return
+    const video = videoRef.current
+    const canvas = cameraCanvasRef.current
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    if (facingMode === 'user') {
+      // Mirror front-facing camera
+      ctx.translate(canvas.width, 0)
+      ctx.scale(-1, 1)
+    }
+    ctx.drawImage(video, 0, 0)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
+    setBuilderData(prev => ({ ...prev, imageUrl: dataUrl }))
+    closeCamera()
+    setMode('form')
+  }, [facingMode, closeCamera])
+
+  // Sync video srcObject when stream updates
+  useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream
+      videoRef.current.play().catch(() => {})
+    }
+  }, [cameraStream])
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop())
+    }
+  }, [cameraStream])
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_FORMATS.includes(file.type) && !file.name.toLowerCase().endsWith('.heic')) {
@@ -65,8 +165,9 @@ export default function GeneratorSection() {
 
   const handleGenerate = async () => {
     setGenerating(true)
-    await new Promise(r => setTimeout(r, 1600))
+    await new Promise(r => setTimeout(r, 1200))
     setGenerating(false)
+    setPreviewTab('3d')
     setMode('preview')
   }
 
@@ -82,7 +183,7 @@ export default function GeneratorSection() {
 
   const handleShareX = () => {
     const name = builderData.name ? `${builderData.name} ` : ''
-    const text = encodeURIComponent(`${name}just generated my official @HackerHouseGoa 2026 Builder Ticket! 🏗️🌴 #FrameInGoa #HHGoa2026`)
+    const text = encodeURIComponent(`${name}just generated my official @HackerHouseGoa 2026 Builder Ticket! 🏗️⚡ #FrameInGoa #HHGoa2026`)
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
   }
 
@@ -93,14 +194,18 @@ export default function GeneratorSection() {
       role: '',
       college: '',
       phone: '',
-      builderNo: '108',
+      builderNo: '',
       totalBuilders: '247',
-      dates: 'OPEN TRIALS · OCT 28–31',
+      dates: '28 OCT – 31 OCT 2026',
       cardType: 'id-card',
       imageUrl: null,
+      builderClass: '',
+      beachBag: '',
+      shipping: '',
     })
     setMode('upload')
     setError(null)
+    setLanyardCardImage(null)
   }
 
   return (
@@ -169,6 +274,36 @@ export default function GeneratorSection() {
                   ))}
                   <span className="upload-zone__format-text">· Max 10MB</span>
                 </div>
+
+                {/* Action buttons row */}
+                <div className="upload-zone__actions" onClick={e => e.stopPropagation()}>
+                  {/* Camera button */}
+                  <button
+                    type="button"
+                    className="btn btn-sm upload-zone__camera-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openCamera()
+                    }}
+                  >
+                    <Camera size={15} />
+                    Take Photo
+                  </button>
+                  {/* Sample photo button */}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const sampleSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="%23044A29"/><circle cx="200" cy="150" r="70" fill="%23F4B728"/><ellipse cx="200" cy="340" rx="130" ry="100" fill="%23D9432F"/></svg>`
+                      setBuilderData(prev => ({ ...prev, imageUrl: sampleSvg }))
+                      setMode('form')
+                    }}
+                  >
+                    ✨ Sample Photo
+                  </button>
+                </div>
+
                 {dragOver && (
                   <div className="upload-zone__overlay">
                     <span>Drop to Upload!</span>
@@ -184,7 +319,7 @@ export default function GeneratorSection() {
               )}
 
               <div className="upload-note">
-                <p>📸 Portrait photos work best. Automatically fitted to the official sunburst ticket frame.</p>
+                <p>📸 Portrait photos work best. Automatically fitted to the official circular frame.</p>
               </div>
             </div>
           )}
@@ -198,10 +333,29 @@ export default function GeneratorSection() {
                   {builderData.imageUrl && (
                     <img src={builderData.imageUrl} alt="Your photo" className="generator__thumb-img" />
                   )}
-                  <button className="generator__thumb-change" onClick={handleReset}>
-                    <RefreshCw size={14} />
-                    Change
-                  </button>
+                  <div className="generator__thumb-btns">
+                    <button
+                      className="generator__thumb-change"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <RefreshCw size={14} />
+                      Change Photo
+                    </button>
+                    <button
+                      className="generator__thumb-change generator__thumb-camera"
+                      onClick={openCamera}
+                    >
+                      <Camera size={14} />
+                      Retake
+                    </button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.heic,.heif"
+                    style={{ display: 'none' }}
+                    onChange={handleFileInput}
+                  />
                 </div>
 
                 {/* Form fields */}
@@ -249,7 +403,7 @@ export default function GeneratorSection() {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Frontend + AI Developer"
+                      placeholder="e.g. Full Stack Developer"
                       value={builderData.role}
                       onChange={e => setBuilderData(prev => ({ ...prev, role: e.target.value }))}
                       maxLength={35}
@@ -289,47 +443,84 @@ export default function GeneratorSection() {
                     />
                   </div>
 
-                  {/* Builder Serial Number */}
-                  <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label className="form-label">
-                        <Hash size={14} />
-                        Builder No.
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="108"
-                        value={builderData.builderNo}
-                        onChange={e => setBuilderData(prev => ({ ...prev, builderNo: e.target.value }))}
-                        maxLength={6}
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label">
-                        Total Builders
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="247"
-                        value={builderData.totalBuilders}
-                        onChange={e => setBuilderData(prev => ({ ...prev, totalBuilders: e.target.value }))}
-                        maxLength={6}
-                      />
-                    </div>
+                  {/* Builder Class */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Code size={14} />
+                      Builder Class
+                      <span className="form-optional">e.g. Terminal Wizard</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Terminal Wizard"
+                      value={builderData.builderClass}
+                      onChange={e => setBuilderData(prev => ({ ...prev, builderClass: e.target.value }))}
+                      maxLength={25}
+                    />
+                  </div>
+
+                  {/* Beach Bag */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Coffee size={14} />
+                      Beach Bag
+                      <span className="form-optional">What you're bringing</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Coconut · VS Code · Lo-Fi Beats"
+                      value={builderData.beachBag}
+                      onChange={e => setBuilderData(prev => ({ ...prev, beachBag: e.target.value }))}
+                      maxLength={40}
+                    />
+                  </div>
+
+                  {/* Shipping */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Truck size={14} />
+                      Shipping
+                      <span className="form-optional">What you're building</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Building The Future"
+                      value={builderData.shipping}
+                      onChange={e => setBuilderData(prev => ({ ...prev, shipping: e.target.value }))}
+                      maxLength={30}
+                    />
+                  </div>
+
+                  {/* Builder ID (auto-generated, read-only) */}
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Hash size={14} />
+                      Builder ID
+                      <span className="form-optional">Auto-generated</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={builderData.builderNo}
+                      placeholder="HHGOA26-XXXX"
+                      readOnly
+                      style={{ opacity: 0.7, cursor: 'default' }}
+                    />
                   </div>
 
                   {/* Event Dates */}
                   <div className="form-group">
                     <label className="form-label">
                       <Calendar size={14} />
-                      Event Dates Header
+                      Event Dates
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="OPEN TRIALS · OCT 28–31"
+                      placeholder="28 OCT – 31 OCT 2026"
                       value={builderData.dates}
                       onChange={e => setBuilderData(prev => ({ ...prev, dates: e.target.value }))}
                       maxLength={30}
@@ -385,14 +576,65 @@ export default function GeneratorSection() {
           {/* STEP 3: Preview */}
           {mode === 'preview' && (
             <div className="generator__preview">
-              <div className="generator__canvas-wrap">
+              {/* Tab Switcher */}
+              <div className="preview-tab-toggle">
+                <button
+                  className={`preview-tab-btn ${previewTab === '3d' ? 'preview-tab-btn--active' : ''}`}
+                  onClick={() => setPreviewTab('3d')}
+                >
+                  🎪 3D Interactive Lanyard
+                </button>
+                <button
+                  className={`preview-tab-btn ${previewTab === '2d' ? 'preview-tab-btn--active' : ''}`}
+                  onClick={() => setPreviewTab('2d')}
+                >
+                  📄 2D High-Res Print View
+                </button>
+              </div>
+
+              {/* 3D Lanyard Interactive Display (Default) */}
+              {previewTab === '3d' && (
+                <div className="generator__lanyard-container">
+                  <div className="generator__lanyard-canvas">
+                    <LanyardErrorBoundary>
+                      <Suspense fallback={
+                        <div className="lanyard-loading">
+                          <div className="spinner" style={{width:32,height:32,borderWidth:3}} />
+                          <span>Loading 3D Physics…</span>
+                        </div>
+                      }>
+                        <Lanyard
+                          position={[0, 0, 16]}
+                          gravity={[0, -40, 0]}
+                          frontImage={lanyardCardImage}
+                          imageFit="cover"
+                          lanyardWidth={1}
+                        />
+                      </Suspense>
+                    </LanyardErrorBoundary>
+                  </div>
+                  <p className="generator__lanyard-hint">✦ Drag to swing & rotate your official pass ✦</p>
+                </div>
+              )}
+
+              {/* Single 2D CardCanvas: Always mounted so texture capture and PNG download work instantly */}
+              <div
+                className="generator__canvas-wrap"
+                style={
+                  previewTab === '2d'
+                    ? { display: 'flex', justifyContent: 'center' }
+                    : { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }
+                }
+              >
                 <CardCanvas
                   ref={canvasRef}
                   builderData={builderData}
+                  onRenderComplete={(url) => setLanyardCardImage(url)}
                 />
               </div>
+
               <div className="generator__preview-actions">
-                <button className="btn btn-outline" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={() => setMode('form')}>
+                <button className="btn btn-outline btn-lg" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={() => setMode('form')}>
                   ← Edit Details
                 </button>
                 <button className="btn btn-primary btn-lg" onClick={handleDownload}>
@@ -427,10 +669,94 @@ export default function GeneratorSection() {
                   Generate Another
                 </button>
               </div>
+
+              {/* 3D Lanyard Showcase in Success */}
+              {lanyardCardImage && (
+                <div className="generator__lanyard-container" style={{ marginTop: '24px' }}>
+                  <div className="generator__lanyard-canvas" style={{ height: '480px' }}>
+                    <LanyardErrorBoundary>
+                      <Suspense fallback={<div className="lanyard-loading"><div className="spinner" /></div>}>
+                        <Lanyard
+                          position={[0, 0, 24]}
+                          gravity={[0, -40, 0]}
+                          frontImage={lanyardCardImage}
+                          imageFit="cover"
+                          lanyardWidth={1}
+                        />
+                      </Suspense>
+                    </LanyardErrorBoundary>
+                  </div>
+                  <p className="generator__lanyard-hint">✦ Drag to swing your saved pass ✦</p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Camera Modal */}
+      {cameraOpen && (
+        <div className="camera-modal" role="dialog" aria-modal="true" aria-label="Camera Capture">
+          <div className="camera-modal__backdrop" onClick={closeCamera} />
+          <div className="camera-modal__box">
+            <div className="camera-modal__header">
+              <span className="camera-modal__title">
+                <Camera size={18} />
+                Take Your Photo
+              </span>
+              <button className="camera-modal__close" onClick={closeCamera} aria-label="Close camera">
+                <X size={20} />
+              </button>
+            </div>
+
+            {cameraError ? (
+              <div className="camera-modal__error">
+                <VideoOff size={40} />
+                <p>{cameraError}</p>
+                <button className="btn btn-outline btn-sm" onClick={() => startCamera(facingMode)}>
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="camera-modal__viewfinder">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`camera-modal__video ${facingMode === 'user' ? 'camera-modal__video--mirrored' : ''}`}
+                  />
+                  <div className="camera-modal__guide-circle" />
+                </div>
+                <div className="camera-modal__controls">
+                  <button
+                    className="camera-modal__flip"
+                    onClick={flipCamera}
+                    title="Flip camera"
+                  >
+                    <Video size={18} />
+                    Flip
+                  </button>
+                  <button
+                    className="camera-modal__capture"
+                    onClick={capturePhoto}
+                    aria-label="Capture photo"
+                  >
+                    <div className="camera-modal__shutter" />
+                  </button>
+                  <button className="camera-modal__cancel" onClick={closeCamera}>
+                    Cancel
+                  </button>
+                </div>
+                <p className="camera-modal__hint">Position your face in the circle, then tap the shutter</p>
+              </>
+            )}
+            {/* Hidden canvas for capture */}
+            <canvas ref={cameraCanvasRef} style={{ display: 'none' }} />
+          </div>
+        </div>
+      )}
     </section>
   )
 }

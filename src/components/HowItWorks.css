@@ -2,11 +2,24 @@
    HOW IT WORKS — HH Goa Palette
 ============================= */
 .howitworks {
-  background: var(--hh-green-dark);
+  background: var(--hh-forest-dark);
   position: relative;
   overflow: hidden;
-  border-top: 3px solid var(--hh-yellow);
+  border-top: 3px solid var(--hh-sun-yellow);
 }
+
+/* Decorative palms */
+.howitworks__palm {
+  position: absolute;
+  font-size: 4rem;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 1;
+  bottom: 40px;
+}
+
+.howitworks__palm--left { left: 2%; }
+.howitworks__palm--right { right: 2%; transform: scaleX(-1); }
 
 /* Section header */
 .howitworks__header {
@@ -105,20 +118,23 @@
 .howitworks__feature-pill {
   padding: 9px 20px;
   background: transparent;
-  border: 1.5px solid rgba(246,214,74,0.20);
-  color: rgba(246,214,74,0.75);
+  border: 1.5px solid rgba(244, 183, 40, 0.20);
+  color: rgba(244, 183, 40, 0.75);
   font-size: 13px;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-mono);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: default;
 }
 
 .howitworks__feature-pill:hover {
-  background: rgba(246,214,74,0.08);
-  border-color: rgba(246,214,74,0.45);
-  color: var(--hh-yellow);
+  background: rgba(244, 183, 40, 0.10);
+  border-color: rgba(244, 183, 40, 0.50);
+  color: var(--hh-sun-yellow);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(244, 183, 40, 0.15);
 }
 
 @media (max-width: 900px) {

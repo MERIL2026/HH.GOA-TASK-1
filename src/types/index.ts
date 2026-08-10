@@ -12,4 +12,7 @@ export interface BuilderData {
   dates: string
   cardType: CardType
   imageUrl: string | null
+  builderClass: string
+  beachBag: string
+  shipping: string
 }

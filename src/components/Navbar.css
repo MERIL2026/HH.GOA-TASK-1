@@ -52,6 +52,13 @@
   font-weight: 300;
 }
 
+.navbar__logo-img {
+  width: auto;
+  height: 36px;
+  object-fit: contain;
+  margin-right: 4px;
+}
+
 .navbar__logo-year {
   font-family: 'Space Mono', monospace;
   font-size: 10px;

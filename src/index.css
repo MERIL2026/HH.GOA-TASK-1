@@ -16,6 +16,14 @@
   --hh-terracotta:  #D9432F;   /* Badge & Wavy Border Terracotta Red */
   --hh-white:       #FFFFFF;
 
+  /* === Legacy aliases (component CSS compat) === */
+  --hh-green:        var(--hh-forest);
+  --hh-green-dark:   var(--hh-forest-dark);
+  --hh-green-shadow: var(--hh-forest-dark);
+  --hh-yellow:       var(--hh-sun-yellow);
+  --hh-pink:         var(--hh-terracotta);
+  --black:           var(--hh-forest);
+
   /* === Typography — CANELA DISPLAY STYLING === */
   --font-canela:  'Canela', 'Canela Display', 'Cinzel Decorative', 'Bodoni Moda', 'Cinzel', 'Cormorant Garamond', serif;
   --font-serif:   'Canela', 'Canela Display', 'Cinzel Decorative', 'Bodoni Moda', 'Cinzel', 'Cormorant Garamond', serif;
@@ -124,6 +132,81 @@ input, textarea, select { font-family: var(--font-sans); }
   color: var(--hh-white);
 }
 
+.body-lg {
+  font-family: var(--font-sans);
+  font-size: clamp(16px, 1.6vw, 18px);
+  line-height: 1.65;
+  color: rgba(250, 245, 235, 0.75);
+}
+
+.body-md {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(250, 245, 235, 0.65);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1.5px solid;
+}
+
+.badge-yellow {
+  background: rgba(244, 183, 40, 0.12);
+  color: var(--hh-sun-yellow);
+  border-color: rgba(244, 183, 40, 0.35);
+}
+
+.badge-green {
+  background: rgba(4, 74, 41, 0.5);
+  color: var(--hh-sun-yellow);
+  border-color: rgba(244, 183, 40, 0.3);
+}
+
+/* Gradient text */
+.gradient-text-green {
+  background: linear-gradient(135deg, var(--hh-sun-yellow) 0%, var(--hh-terracotta) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-goa {
+  background: linear-gradient(
+    90deg,
+    var(--hh-sun-yellow) 0%,
+    var(--hh-cream) 40%,
+    var(--hh-terracotta) 80%,
+    var(--hh-sun-yellow) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: textShimmer 4s linear infinite;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: rgba(244, 183, 40, 0.15);
+  margin: 0;
+}
+
+.btn-xl {
+  padding: 20px 52px;
+  font-size: 15px;
+}
+
 /* ============================
    VINTAGE TICKET BUTTONS
 ============================= */
@@ -205,6 +288,7 @@ input, textarea, select { font-family: var(--font-sans); }
 
 .section {
   padding: var(--sp-24) 0;
+  position: relative;
 }
 
 /* Vintage Ticket Paper Panel */
@@ -225,16 +309,49 @@ input, textarea, select { font-family: var(--font-sans); }
 }
 
 /* ============================
-   ANIMATIONS
+   GOA VIBES & MOTION ANIMATIONS
 ============================= */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
+
+/* Palm Tree Wind Sway */
+@keyframes palmSway {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50%       { transform: rotate(4deg) scale(1.03); }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-12px); }
+/* Goa Sunburst Background Rotation */
+@keyframes sunburstRotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Ocean Wave Divider Motion */
+@keyframes waveFlow {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(-25px); }
+  100% { transform: translateX(0); }
+}
+
+/* Background Watermark Marquee */
+@keyframes bgMarquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Tropical Glow Pulse */
+@keyframes sunsetGlow {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(1.15); }
+}
+
+/* Badge Float */
+@keyframes badgeFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(35px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes marquee {
@@ -242,17 +359,239 @@ input, textarea, select { font-family: var(--font-sans); }
   to   { transform: translateX(-50%); }
 }
 
-.animate-fade-up  { animation: fadeInUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
-.animate-float    { animation: float    5s ease-in-out infinite; }
+/* Card float */
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50%       { transform: translateY(-14px) rotate(1deg); }
+}
+
+/* Scale-in pop */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Scroll bounce indicator */
+@keyframes scrollBounce {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50%       { transform: translateY(8px); opacity: 0.4; }
+}
+
+/* Text shimmer gradient sweep */
+@keyframes textShimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* Tropical particle float */
+@keyframes tropicalFloat {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0.08; }
+  25%  { transform: translateY(-30px) rotate(5deg); opacity: 0.15; }
+  50%  { transform: translateY(-15px) rotate(-3deg); opacity: 0.1; }
+  75%  { transform: translateY(-40px) rotate(4deg); opacity: 0.14; }
+  100% { transform: translateY(0) rotate(0deg); opacity: 0.08; }
+}
+
+/* Firefly twinkle */
+@keyframes fireflyPulse {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50%       { opacity: 0.8; transform: scale(1.2); }
+}
+
+/* Ocean drift */
+@keyframes oceanDrift {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  50%       { transform: translateX(-30px) scaleY(1.08); }
+}
+
+/* Goa wave text underline */
+@keyframes waveUnderline {
+  0%, 100% { transform: scaleX(0.3); opacity: 0.5; }
+  50%       { transform: scaleX(1); opacity: 1; }
+}
+
+/* Pill pop on hover */
+@keyframes pillPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Sun pulse ring */
+@keyframes sunPulse {
+  0%   { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Scroll reveal */
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(50px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Utility Classes */
+.animate-palm-sway     { animation: palmSway 7s ease-in-out infinite; transform-origin: bottom center; }
+.animate-sunburst      { animation: sunburstRotate 75s linear infinite; }
+.animate-wave          { animation: waveFlow 6s ease-in-out infinite; }
+.animate-glow          { animation: sunsetGlow 6s ease-in-out infinite; }
+.animate-badge-float   { animation: badgeFloat 4s ease-in-out infinite; }
+.animate-fade-up       { animation: fadeInUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards; opacity: 0; }
+.animate-float         { animation: cardFloat 5s ease-in-out infinite; }
+.animate-scale-in      { animation: scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.animate-scroll-bounce { animation: scrollBounce 2s ease-in-out infinite; }
+.animate-text-shimmer  { animation: textShimmer 4s linear infinite; }
 
 .delay-1 { animation-delay: 0.1s; }
 .delay-2 { animation-delay: 0.2s; }
 .delay-3 { animation-delay: 0.3s; }
 .delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.55s; }
+
+/* Scroll-triggered reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(45px);
+  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-reveal.delay-1 { transition-delay: 0.1s; }
+.scroll-reveal.delay-2 { transition-delay: 0.2s; }
+.scroll-reveal.delay-3 { transition-delay: 0.3s; }
+.scroll-reveal.delay-4 { transition-delay: 0.4s; }
+.scroll-reveal.delay-5 { transition-delay: 0.55s; }
+
+/* Stagger children reveal */
+.stagger-children > * {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stagger-children.is-visible > *:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.05s; }
+.stagger-children.is-visible > *:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.15s; }
+.stagger-children.is-visible > *:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.25s; }
+.stagger-children.is-visible > *:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.35s; }
+.stagger-children.is-visible > *:nth-child(5) { opacity: 1; transform: translateY(0); transition-delay: 0.45s; }
+.stagger-children.is-visible > *:nth-child(6) { opacity: 1; transform: translateY(0); transition-delay: 0.55s; }
+
+/* Goa section decorative elements */
+.section-goa-accent {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-goa-accent::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(244, 183, 40, 0.025) 0deg 12deg,
+    transparent 12deg 24deg
+  );
+  border-radius: 50%;
+  animation: sunburstRotate 90s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Animated Goa text highlight */
+.text-goa-wave {
+  position: relative;
+  display: inline-block;
+}
+
+.text-goa-wave::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--hh-sun-yellow), var(--hh-terracotta));
+  transform-origin: left;
+  animation: waveUnderline 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-palm-sway,
+  .animate-sunburst,
+  .animate-wave,
+  .animate-glow,
+  .animate-badge-float,
+  .animate-fade-up,
+  .animate-float,
+  .animate-scale-in,
+  .animate-scroll-bounce,
+  .animate-text-shimmer,
+  .bg-watermark-strip,
+  .gradient-text-goa {
+    animation: none !important;
+  }
+
+  .animate-fade-up,
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .scroll-reveal.is-visible,
+  .stagger-children.is-visible > * {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Background Watermark Text Strip */
+.bg-watermark-strip {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  pointer-events: none;
+  z-index: 0;
+  white-space: nowrap;
+  font-family: var(--font-canela);
+  font-size: clamp(60px, 12vw, 140px);
+  font-weight: 900;
+  color: rgba(244, 183, 40, 0.035);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+  animation: bgMarquee 35s linear infinite;
+}
+
+/* Animated Ocean Wave Separator */
+.wave-divider {
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+  margin-top: -1px;
+}
+
+.wave-divider svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 50px);
+  height: 48px;
+}
 
 /* Responsive */
 @media (max-width: 768px) {
   .container { padding: 0 var(--sp-4); }
   .section   { padding: var(--sp-16) 0; }
   .display-hero { font-size: clamp(48px, 13vw, 88px); }
+  .wave-divider svg { height: 32px; }
 }

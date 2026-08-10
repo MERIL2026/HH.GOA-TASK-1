@@ -1,5 +1,11 @@
 /* App-level layout */
 .app {
   min-height: 100vh;
-  background: var(--black);
+  background: var(--hh-forest);
+  position: relative;
+}
+
+.app main {
+  position: relative;
+  z-index: 1;
 }

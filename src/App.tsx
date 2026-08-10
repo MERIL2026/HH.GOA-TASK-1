@@ -7,6 +7,7 @@ import GeneratorSection from './components/GeneratorSection'
 import Roadmap from './components/Roadmap'
 import Community from './components/Community'
 import Footer from './components/Footer'
+import GoaAmbience from './components/GoaAmbience'
 import './App.css'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
 
   return (
     <div className="app">
+      <GoaAmbience />
       <Navbar activeSection={activeSection} setActiveSection={setActiveSection} />
       <main>
         <Hero />

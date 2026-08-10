@@ -38,7 +38,8 @@ export default function Navbar({ activeSection, setActiveSection }: NavbarProps)
         {/* Logo */}
         <div className="navbar__logo" onClick={() => scrollToSection('home')}>
           <div className="navbar__logo-wordmark">
-            HH <span>Goa</span>
+            <img src="/hhgoa-logo.png" alt="HH Goa Official Logo" className="navbar__logo-img" />
+            HH <span>GOA</span>
           </div>
           <div className="navbar__logo-year">2026</div>
         </div>

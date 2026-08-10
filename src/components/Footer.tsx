@@ -21,13 +21,13 @@ export default function Footer() {
             Builder Identity Generator for Hacker House Goa 2026. Built by Aether Labs.
           </p>
           <div className="footer__social">
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="footer__social-link">
+            <a href="https://x.com/search?q=%23FrameInGoa" target="_blank" rel="noreferrer" className="footer__social-link" title="Twitter / X">
               <Share2 size={16} />
             </a>
-            <a href="https://github.com" target="_blank" rel="noreferrer" className="footer__social-link">
+            <a href="https://github.com" target="_blank" rel="noreferrer" className="footer__social-link" title="GitHub">
               <Code2 size={16} />
             </a>
-            <a href="#" className="footer__social-link">
+            <a href="https://x.com/search?q=%23HHGoa2026" target="_blank" rel="noreferrer" className="footer__social-link" title="Official Hashtag">
               <ExternalLink size={16} />
             </a>
           </div>
@@ -56,9 +56,9 @@ export default function Footer() {
           <div className="footer__links-col">
             <h4 className="footer__links-title">Event</h4>
             <ul className="footer__links">
-              <li><a href="#">Hacker House Goa</a></li>
-              <li><a href="#">#FrameInGoa</a></li>
-              <li><a href="#">Submit Your Build</a></li>
+              <li><a href="#home">Hacker House Goa</a></li>
+              <li><a href="https://x.com/search?q=%23FrameInGoa" target="_blank" rel="noreferrer">#FrameInGoa</a></li>
+              <li><a href="https://forms.gle/jM5hTaGvsrfEfixPA" target="_blank" rel="noreferrer">Submit Your Build</a></li>
               <li><a href="https://forms.gle/jM5hTaGvsrfEfixPA" target="_blank" rel="noreferrer">Submission Form</a></li>
             </ul>
           </div>
