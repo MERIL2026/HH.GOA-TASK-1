@@ -22,4 +22,10 @@ declare global {
       meshLineMaterial: any;
     }
   }
+  namespace React.JSX {
+    interface IntrinsicElements {
+      meshLineGeometry: any;
+      meshLineMaterial: any;
+    }
+  }
 }

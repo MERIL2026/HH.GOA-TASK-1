@@ -1,10 +1,26 @@
 import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
-import { Upload, X, CheckCircle, Wand2, Download, RefreshCw, User, BookOpen, GraduationCap, Phone, Hash, Calendar, Tag, Code, Coffee, Truck, Camera, Video, VideoOff } from 'lucide-react'
+import {
+  Upload,
+  X,
+  CheckCircle,
+  Wand2,
+  Download,
+  RefreshCw,
+  User,
+  Hash,
+  Camera,
+  Video,
+  VideoOff,
+  Sparkles,
+  Layers,
+  Image as ImageIcon,
+} from 'lucide-react'
 import CardCanvas from './CardCanvas'
+import PfpRenderer from './PfpRenderer'
 import Lanyard from './lanyard/Lanyard'
 import LanyardErrorBoundary from './lanyard/LanyardErrorBoundary'
 import { generateBuilderId } from '../hooks/useQRCode'
-import type { GeneratorMode, BuilderData } from '../types'
+import type { GeneratorMode, BuilderData, PfpFrameStyle } from '../types'
 import './GeneratorSection.css'
 
 export type { BuilderData }
@@ -18,7 +34,7 @@ export default function GeneratorSection() {
   const [error, setError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
   const [lanyardCardImage, setLanyardCardImage] = useState<string | null>(null)
-  const [previewTab, setPreviewTab] = useState<'3d' | '2d'>('3d')
+  const [previewTab, setPreviewTab] = useState<'3d' | '2d' | 'pfp'>('3d')
 
   // Camera states
   const [cameraOpen, setCameraOpen] = useState(false)
@@ -42,9 +58,14 @@ export default function GeneratorSection() {
     builderClass: '',
     beachBag: '',
     shipping: '',
+    pfpFrame: 'classic-goa',
+    location: 'Goa, India',
+    tagline: 'Building the Future',
   })
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const pfpCanvasRef = useRef<HTMLCanvasElement>(null)
 
   // Auto-generate unique Builder ID whenever name or phone changes
   useEffect(() => {
@@ -56,25 +77,28 @@ export default function GeneratorSection() {
   }, [builderData.name, builderData.phone])
 
   // Camera: Start stream
-  const startCamera = useCallback(async (mode: 'user' | 'environment' = 'user') => {
-    setCameraError(null)
-    try {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(t => t.stop())
+  const startCamera = useCallback(
+    async (mode: 'user' | 'environment' = 'user') => {
+      setCameraError(null)
+      try {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(t => t.stop())
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        })
+        setCameraStream(stream)
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play()
+        }
+      } catch {
+        setCameraError('Camera access denied. Please allow camera permission and try again.')
       }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      })
-      setCameraStream(stream)
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.play()
-      }
-    } catch (err: any) {
-      setCameraError('Camera access denied. Please allow camera permission and try again.')
-    }
-  }, [cameraStream])
+    },
+    [cameraStream]
+  )
 
   const openCamera = useCallback(async () => {
     setCameraOpen(true)
@@ -103,7 +127,6 @@ export default function GeneratorSection() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     if (facingMode === 'user') {
-      // Mirror front-facing camera
       ctx.translate(canvas.width, 0)
       ctx.scale(-1, 1)
     }
@@ -114,7 +137,6 @@ export default function GeneratorSection() {
     setMode('form')
   }, [facingMode, closeCamera])
 
-  // Sync video srcObject when stream updates
   useEffect(() => {
     if (videoRef.current && cameraStream) {
       videoRef.current.srcObject = cameraStream
@@ -122,7 +144,6 @@ export default function GeneratorSection() {
     }
   }, [cameraStream])
 
-  // Cleanup camera on unmount
   useEffect(() => {
     return () => {
       if (cameraStream) cameraStream.getTracks().forEach(t => t.stop())
@@ -165,25 +186,45 @@ export default function GeneratorSection() {
 
   const handleGenerate = async () => {
     setGenerating(true)
-    await new Promise(r => setTimeout(r, 1200))
+    await new Promise(r => setTimeout(r, 1000))
     setGenerating(false)
     setPreviewTab('3d')
     setMode('preview')
   }
 
-  const handleDownload = () => {
+  // Download handlers
+  const handleDownloadIdCard = () => {
     const canvas = canvasRef.current
     if (!canvas) return
     const link = document.createElement('a')
-    link.download = `hh-goa-builder-${builderData.name || 'id'}.png`
+    link.download = `hh-goa-builder-id-${builderData.name || 'card'}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
     setMode('success')
   }
 
+  const handleDownloadPfp = () => {
+    const canvas = pfpCanvasRef.current
+    if (!canvas) return
+    const link = document.createElement('a')
+    link.download = `hh-goa-pfp-${builderData.name || 'avatar'}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+    setMode('success')
+  }
+
+  const handleDownloadBoth = () => {
+    handleDownloadIdCard()
+    setTimeout(() => {
+      handleDownloadPfp()
+    }, 500)
+  }
+
   const handleShareX = () => {
     const name = builderData.name ? `${builderData.name} ` : ''
-    const text = encodeURIComponent(`${name}just generated my official @HackerHouseGoa 2026 Builder Ticket! 🏗️⚡ #FrameInGoa #HHGoa2026`)
+    const text = encodeURIComponent(
+      `${name}just generated my official @HackerHouseGoa 2026 Builder Ticket & PFP! 🏗️⚡ #FrameInGoa #HHGoa2026`
+    )
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
   }
 
@@ -202,6 +243,9 @@ export default function GeneratorSection() {
       builderClass: '',
       beachBag: '',
       shipping: '',
+      pfpFrame: 'classic-goa',
+      location: 'Goa, India',
+      tagline: 'Building the Future',
     })
     setMode('upload')
     setError(null)
@@ -218,10 +262,10 @@ export default function GeneratorSection() {
             Official Builder Ticket Generator
           </span>
           <h2 className="display-medium" style={{ color: 'var(--hh-cream)' }}>
-            Create Your <span style={{ color: 'var(--hh-sun-yellow)' }}>Builder Ticket</span>
+            Create Your <span style={{ color: 'var(--hh-sun-yellow)' }}>Builder Ticket & PFP</span>
           </h2>
           <p className="body-lg generator__subtitle">
-            Free. No login required. Instant official export.
+            Free. No login required. Instant high-res export (1200×1800 ID & 1024×1024 PFP).
           </p>
         </div>
 
@@ -232,7 +276,12 @@ export default function GeneratorSection() {
             const isActive = i === modeIndex
             const isDone = i < modeIndex
             return (
-              <div key={step} className={`gen-step ${isActive ? 'gen-step--active' : ''} ${isDone ? 'gen-step--done' : ''}`}>
+              <div
+                key={step}
+                className={`gen-step ${isActive ? 'gen-step--active' : ''} ${
+                  isDone ? 'gen-step--done' : ''
+                }`}
+              >
                 <div className="gen-step__circle">
                   {isDone ? <CheckCircle size={14} /> : <span>{i + 1}</span>}
                 </div>
@@ -250,8 +299,13 @@ export default function GeneratorSection() {
           {mode === 'upload' && (
             <div className="generator__upload">
               <div
-                className={`upload-zone ${dragOver ? 'upload-zone--drag' : ''} ${error ? 'upload-zone--error' : ''}`}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+                className={`upload-zone ${dragOver ? 'upload-zone--drag' : ''} ${
+                  error ? 'upload-zone--error' : ''
+                }`}
+                onDragOver={e => {
+                  e.preventDefault()
+                  setDragOver(true)
+                }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
@@ -270,18 +324,19 @@ export default function GeneratorSection() {
                 <p className="upload-zone__subtitle">or click to browse from device</p>
                 <div className="upload-zone__formats">
                   {['JPG', 'PNG', 'HEIC'].map(f => (
-                    <span key={f} className="upload-zone__format">{f}</span>
+                    <span key={f} className="upload-zone__format">
+                      {f}
+                    </span>
                   ))}
                   <span className="upload-zone__format-text">· Max 10MB</span>
                 </div>
 
                 {/* Action buttons row */}
                 <div className="upload-zone__actions" onClick={e => e.stopPropagation()}>
-                  {/* Camera button */}
                   <button
                     type="button"
                     className="btn btn-sm upload-zone__camera-btn"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       openCamera()
                     }}
@@ -289,11 +344,10 @@ export default function GeneratorSection() {
                     <Camera size={15} />
                     Take Photo
                   </button>
-                  {/* Sample photo button */}
                   <button
                     type="button"
                     className="btn btn-sm btn-outline"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       const sampleSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="%23044A29"/><circle cx="200" cy="150" r="70" fill="%23F4B728"/><ellipse cx="200" cy="340" rx="130" ry="100" fill="%23D9432F"/></svg>`
                       setBuilderData(prev => ({ ...prev, imageUrl: sampleSvg }))
@@ -319,19 +373,24 @@ export default function GeneratorSection() {
               )}
 
               <div className="upload-note">
-                <p>📸 Portrait photos work best. Automatically fitted to the official circular frame.</p>
+                <p>📸 Portrait photos work best. Automatically fitted to the circular frame & PFP generator.</p>
               </div>
             </div>
           )}
 
-          {/* STEP 2: Form */}
+          {/* STEP 2: Grouped Form Editor */}
           {mode === 'form' && (
             <div className="generator__form">
               <div className="generator__form-layout">
-                {/* Preview thumb */}
+                {/* Photo Preview Thumb */}
                 <div className="generator__form-thumb">
-                  {builderData.imageUrl && (
+                  {builderData.imageUrl ? (
                     <img src={builderData.imageUrl} alt="Your photo" className="generator__thumb-img" />
+                  ) : (
+                    <div className="generator__thumb-placeholder">
+                      <User size={48} />
+                      <span>No Photo Uploaded</span>
+                    </div>
                   )}
                   <div className="generator__thumb-btns">
                     <button
@@ -358,214 +417,193 @@ export default function GeneratorSection() {
                   />
                 </div>
 
-                {/* Form fields */}
+                {/* Grouped Form Fields */}
                 <div className="generator__form-fields">
 
-                  {/* Name */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <User size={14} />
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Eklavya Dilip Jha"
-                      value={builderData.name}
-                      onChange={e => setBuilderData(prev => ({ ...prev, name: e.target.value }))}
-                      maxLength={32}
-                    />
-                  </div>
-
-                  {/* Fun Title Badge */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Tag size={14} />
-                      Builder Title / Badge
-                      <span className="form-optional">e.g. Full-Moon Merge Monk</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Full-Moon Merge Monk"
-                      value={builderData.titleBadge}
-                      onChange={e => setBuilderData(prev => ({ ...prev, titleBadge: e.target.value }))}
-                      maxLength={30}
-                    />
-                  </div>
-
-                  {/* Role */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <BookOpen size={14} />
-                      Role
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Full Stack Developer"
-                      value={builderData.role}
-                      onChange={e => setBuilderData(prev => ({ ...prev, role: e.target.value }))}
-                      maxLength={35}
-                    />
-                  </div>
-
-                  {/* College / Organization */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <GraduationCap size={14} />
-                      College / Organization
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Gandhinagar University"
-                      value={builderData.college}
-                      onChange={e => setBuilderData(prev => ({ ...prev, college: e.target.value }))}
-                      maxLength={35}
-                    />
-                  </div>
-
-                  {/* Phone / Contact */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Phone size={14} />
-                      Phone / Handle
-                      <span className="form-optional">e.g. ....91</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. ....91"
-                      value={builderData.phone}
-                      onChange={e => setBuilderData(prev => ({ ...prev, phone: e.target.value }))}
-                      maxLength={20}
-                    />
-                  </div>
-
-                  {/* Builder Class */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Code size={14} />
-                      Builder Class
-                      <span className="form-optional">e.g. Terminal Wizard</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Terminal Wizard"
-                      value={builderData.builderClass}
-                      onChange={e => setBuilderData(prev => ({ ...prev, builderClass: e.target.value }))}
-                      maxLength={25}
-                    />
-                  </div>
-
-                  {/* Beach Bag */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Coffee size={14} />
-                      Beach Bag
-                      <span className="form-optional">What you're bringing</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Coconut · VS Code · Lo-Fi Beats"
-                      value={builderData.beachBag}
-                      onChange={e => setBuilderData(prev => ({ ...prev, beachBag: e.target.value }))}
-                      maxLength={40}
-                    />
-                  </div>
-
-                  {/* Shipping */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Truck size={14} />
-                      Shipping
-                      <span className="form-optional">What you're building</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Building The Future"
-                      value={builderData.shipping}
-                      onChange={e => setBuilderData(prev => ({ ...prev, shipping: e.target.value }))}
-                      maxLength={30}
-                    />
-                  </div>
-
-                  {/* Builder ID (auto-generated, read-only) */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Hash size={14} />
-                      Builder ID
-                      <span className="form-optional">Auto-generated</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={builderData.builderNo}
-                      placeholder="HHGOA26-XXXX"
-                      readOnly
-                      style={{ opacity: 0.7, cursor: 'default' }}
-                    />
-                  </div>
-
-                  {/* Event Dates */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <Calendar size={14} />
-                      Event Dates
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="28 OCT – 31 OCT 2026"
-                      value={builderData.dates}
-                      onChange={e => setBuilderData(prev => ({ ...prev, dates: e.target.value }))}
-                      maxLength={30}
-                    />
-                  </div>
-
-                  {/* Card type selector */}
-                  <div className="form-group">
-                    <label className="form-label">Card Format</label>
-                    <div className="card-type-toggle">
-                      <button
-                        className={`card-type-btn ${builderData.cardType === 'id-card' ? 'active' : ''}`}
-                        onClick={() => setBuilderData(prev => ({ ...prev, cardType: 'id-card' }))}
-                      >
-                        🪪 Ticket ID Card
-                      </button>
-                      <button
-                        className={`card-type-btn ${builderData.cardType === 'pfp-frame' ? 'active' : ''}`}
-                        onClick={() => setBuilderData(prev => ({ ...prev, cardType: 'pfp-frame' }))}
-                      >
-                        🖼️ PFP Frame
-                      </button>
+                  {/* Section 1: Profile Information */}
+                  <div className="form-section-block">
+                    <h4 className="form-section-title">
+                      <User size={16} />
+                      1. Profile Information
+                    </h4>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">Full Name</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. Eklavya Dilip Jha"
+                          value={builderData.name}
+                          onChange={e => setBuilderData(prev => ({ ...prev, name: e.target.value }))}
+                          maxLength={32}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Role</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. Full Stack Developer"
+                          value={builderData.role}
+                          onChange={e => setBuilderData(prev => ({ ...prev, role: e.target.value }))}
+                          maxLength={35}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">College / Organization</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. Gandhinagar University"
+                          value={builderData.college}
+                          onChange={e => setBuilderData(prev => ({ ...prev, college: e.target.value }))}
+                          maxLength={35}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Title / Badge</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. Full-Moon Merge Monk"
+                          value={builderData.titleBadge}
+                          onChange={e => setBuilderData(prev => ({ ...prev, titleBadge: e.target.value }))}
+                          maxLength={30}
+                        />
+                      </div>
                     </div>
                   </div>
+
+                  {/* Section 2: Identity & Contact */}
+                  <div className="form-section-block">
+                    <h4 className="form-section-title">
+                      <Hash size={16} />
+                      2. Identity & Contact
+                    </h4>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">Phone / Handle</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. ....91 or @handle"
+                          value={builderData.phone}
+                          onChange={e => setBuilderData(prev => ({ ...prev, phone: e.target.value }))}
+                          maxLength={20}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Builder ID (Auto-generated)</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={builderData.builderNo}
+                          readOnly
+                          style={{ opacity: 0.85, fontWeight: 700, letterSpacing: '0.05em' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Goa Event Details */}
+                  <div className="form-section-block">
+                    <h4 className="form-section-title">
+                      <Sparkles size={16} />
+                      3. Goa Event Details
+                    </h4>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">Builder Class</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. Terminal Wizard"
+                          value={builderData.builderClass}
+                          onChange={e => setBuilderData(prev => ({ ...prev, builderClass: e.target.value }))}
+                          maxLength={25}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Beach Bag / Interests</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. Coconut · VS Code · Lo-Fi Beats"
+                          value={builderData.beachBag}
+                          onChange={e => setBuilderData(prev => ({ ...prev, beachBag: e.target.value }))}
+                          maxLength={40}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Shipping Project</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. Building The Future"
+                          value={builderData.shipping}
+                          onChange={e => setBuilderData(prev => ({ ...prev, shipping: e.target.value }))}
+                          maxLength={30}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Event Dates</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={builderData.dates}
+                          onChange={e => setBuilderData(prev => ({ ...prev, dates: e.target.value }))}
+                          maxLength={30}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4: PFP Frame Style Selection */}
+                  <div className="form-section-block">
+                    <h4 className="form-section-title">
+                      <ImageIcon size={16} />
+                      4. PFP Frame Variant
+                    </h4>
+                    <div className="pfp-frame-selector">
+                      {[
+                        { id: 'classic-goa', label: '🌴 Classic Goa', desc: 'Tropical paper & gold accent border' },
+                        { id: 'builder-mode', label: '⚡ Builder Mode', desc: 'Cyber green terminal & code brackets' },
+                        { id: 'ship-from-paradise', label: '⛵ Ship Paradise', desc: 'Sunset terracotta & nautical vibe' },
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          className={`pfp-frame-card ${builderData.pfpFrame === f.id ? 'active' : ''}`}
+                          onClick={() => setBuilderData(prev => ({ ...prev, pfpFrame: f.id as PfpFrameStyle }))}
+                        >
+                          <div className="pfp-frame-card__name">{f.label}</div>
+                          <div className="pfp-frame-card__desc">{f.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
               <div className="generator__form-actions">
-                <button className="btn btn-outline" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={handleReset}>
+                <button
+                  className="btn btn-outline"
+                  style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }}
+                  onClick={handleReset}
+                >
                   ← Back
                 </button>
-                <button
-                  className="btn btn-terracotta btn-lg"
-                  onClick={handleGenerate}
-                  disabled={generating}
-                >
+                <button className="btn btn-terracotta btn-lg" onClick={handleGenerate} disabled={generating}>
                   {generating ? (
                     <>
                       <div className="spinner" />
-                      Generating Ticket...
+                      Generating Assets...
                     </>
                   ) : (
                     <>
                       <Wand2 size={18} />
-                      Generate Official Ticket
+                      Generate Official Assets
                     </>
                   )}
                 </button>
@@ -588,21 +626,29 @@ export default function GeneratorSection() {
                   className={`preview-tab-btn ${previewTab === '2d' ? 'preview-tab-btn--active' : ''}`}
                   onClick={() => setPreviewTab('2d')}
                 >
-                  📄 2D High-Res Print View
+                  📄 2D ID Card (1200×1800)
+                </button>
+                <button
+                  className={`preview-tab-btn ${previewTab === 'pfp' ? 'preview-tab-btn--active' : ''}`}
+                  onClick={() => setPreviewTab('pfp')}
+                >
+                  🖼️ PFP Avatar (1024×1024)
                 </button>
               </div>
 
-              {/* 3D Lanyard Interactive Display (Default) */}
+              {/* 3D Lanyard Tab */}
               {previewTab === '3d' && (
                 <div className="generator__lanyard-container">
                   <div className="generator__lanyard-canvas">
                     <LanyardErrorBoundary>
-                      <Suspense fallback={
-                        <div className="lanyard-loading">
-                          <div className="spinner" style={{width:32,height:32,borderWidth:3}} />
-                          <span>Loading 3D Physics…</span>
-                        </div>
-                      }>
+                      <Suspense
+                        fallback={
+                          <div className="lanyard-loading">
+                            <div className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
+                            <span>Loading 3D Physics…</span>
+                          </div>
+                        }
+                      >
                         <Lanyard
                           position={[0, 0, 16]}
                           gravity={[0, -40, 0]}
@@ -617,7 +663,7 @@ export default function GeneratorSection() {
                 </div>
               )}
 
-              {/* Single 2D CardCanvas: Always mounted so texture capture and PNG download work instantly */}
+              {/* 2D ID Card Tab */}
               <div
                 className="generator__canvas-wrap"
                 style={
@@ -629,20 +675,49 @@ export default function GeneratorSection() {
                 <CardCanvas
                   ref={canvasRef}
                   builderData={builderData}
-                  onRenderComplete={(url) => setLanyardCardImage(url)}
+                  onRenderComplete={url => setLanyardCardImage(url)}
                 />
               </div>
 
+              {/* PFP Avatar Tab */}
+              <div
+                className="generator__pfp-wrap"
+                style={
+                  previewTab === 'pfp'
+                    ? { display: 'flex', justifyContent: 'center' }
+                    : { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }
+                }
+              >
+                <PfpRenderer
+                  ref={pfpCanvasRef}
+                  builderData={builderData}
+                  frameStyle={builderData.pfpFrame}
+                />
+              </div>
+
+              {/* Actions */}
               <div className="generator__preview-actions">
-                <button className="btn btn-outline btn-lg" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={() => setMode('form')}>
+                <button
+                  className="btn btn-outline btn-lg"
+                  style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }}
+                  onClick={() => setMode('form')}
+                >
                   ← Edit Details
                 </button>
-                <button className="btn btn-primary btn-lg" onClick={handleDownload}>
+                <button className="btn btn-primary btn-lg" onClick={handleDownloadIdCard}>
                   <Download size={18} />
-                  Download PNG
+                  Download ID (1200×1800)
                 </button>
-                <button className="btn btn-terracotta btn-lg" onClick={handleShareX}>
-                  <span style={{fontWeight:700}}>𝕏</span>
+                <button className="btn btn-primary btn-lg" onClick={handleDownloadPfp}>
+                  <ImageIcon size={18} />
+                  Download PFP (1024×1024)
+                </button>
+                <button className="btn btn-terracotta btn-lg" onClick={handleDownloadBoth}>
+                  <Layers size={18} />
+                  Download Both
+                </button>
+                <button className="btn btn-outline btn-lg" onClick={handleShareX}>
+                  <span style={{ fontWeight: 700 }}>𝕏</span>
                   Share to X
                 </button>
               </div>
@@ -656,24 +731,30 @@ export default function GeneratorSection() {
               <div className="success-icon animate-scale-in">
                 <CheckCircle size={56} style={{ color: 'var(--hh-forest)' }} />
               </div>
-              <h3 className="display-medium" style={{ color: 'var(--hh-forest-dark)' }}>Ticket Downloaded! 🎉</h3>
+              <h3 className="display-medium" style={{ color: 'var(--hh-forest-dark)' }}>
+                Assets Downloaded! 🎉
+              </h3>
               <p className="body-md generator__success-sub" style={{ color: 'var(--hh-forest)' }}>
-                Your Official Hacker House Goa Builder Ticket is saved. Share it on X and tag #FrameInGoa!
+                Your Official Hacker House Goa Builder Ticket & PFP Avatar are saved. Share it on X and tag #FrameInGoa!
               </p>
               <div className="generator__success-actions">
                 <button className="btn btn-primary btn-lg" onClick={handleShareX}>
-                  <span style={{fontWeight:700}}>𝕏</span>
+                  <span style={{ fontWeight: 700 }}>𝕏</span>
                   Share to X — #FrameInGoa
                 </button>
-                <button className="btn btn-outline" style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }} onClick={handleReset}>
+                <button
+                  className="btn btn-outline"
+                  style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }}
+                  onClick={handleReset}
+                >
                   Generate Another
                 </button>
               </div>
 
-              {/* 3D Lanyard Showcase in Success */}
+              {/* 3D Lanyard Showcase */}
               {lanyardCardImage && (
                 <div className="generator__lanyard-container" style={{ marginTop: '24px' }}>
-                  <div className="generator__lanyard-canvas" style={{ height: '480px' }}>
+                  <div className="generator__lanyard-canvas" style={{ height: '440px' }}>
                     <LanyardErrorBoundary>
                       <Suspense fallback={<div className="lanyard-loading"><div className="spinner" /></div>}>
                         <Lanyard
@@ -725,24 +806,18 @@ export default function GeneratorSection() {
                     autoPlay
                     playsInline
                     muted
-                    className={`camera-modal__video ${facingMode === 'user' ? 'camera-modal__video--mirrored' : ''}`}
+                    className={`camera-modal__video ${
+                      facingMode === 'user' ? 'camera-modal__video--mirrored' : ''
+                    }`}
                   />
                   <div className="camera-modal__guide-circle" />
                 </div>
                 <div className="camera-modal__controls">
-                  <button
-                    className="camera-modal__flip"
-                    onClick={flipCamera}
-                    title="Flip camera"
-                  >
+                  <button className="camera-modal__flip" onClick={flipCamera} title="Flip camera">
                     <Video size={18} />
                     Flip
                   </button>
-                  <button
-                    className="camera-modal__capture"
-                    onClick={capturePhoto}
-                    aria-label="Capture photo"
-                  >
+                  <button className="camera-modal__capture" onClick={capturePhoto} aria-label="Capture photo">
                     <div className="camera-modal__shutter" />
                   </button>
                   <button className="camera-modal__cancel" onClick={closeCamera}>
@@ -752,7 +827,6 @@ export default function GeneratorSection() {
                 <p className="camera-modal__hint">Position your face in the circle, then tap the shutter</p>
               </>
             )}
-            {/* Hidden canvas for capture */}
             <canvas ref={cameraCanvasRef} style={{ display: 'none' }} />
           </div>
         </div>
