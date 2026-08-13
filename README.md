@@ -196,6 +196,25 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
+## 🔗 Explore the Project
+
+🌐 **Live Demo:**  
+https://hh-goa-task-1-five.vercel.app/
+
+💻 **Source Code:**  
+https://github.com/MERIL2026/HH.GOA-TASK-1
+
+𝕏 **Project on X:**  
+https://x.com/MERILPARMAR/status/2087777046688874778?s=20
+
+📸 **Instagram:**  
+https://www.instagram.com/meril_parmar_/
+
+🌐 **Developer Portfolio:**  
+https://meril-parmar-portfolio.vercel.app/
+
+---
+
 ## 🌴 About Hacker House Goa 2026
 
 **Hacker House Goa** is a builder-first community event bringing together developers, designers, and founders to build, learn, and connect in the beautiful backdrop of Goa, India.
