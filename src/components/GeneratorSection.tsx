@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import {
   Upload,
   X,
@@ -17,8 +17,8 @@ import {
 } from 'lucide-react'
 import CardCanvas from './CardCanvas'
 import PfpRenderer from './PfpRenderer'
-import Lanyard from './lanyard/Lanyard'
-import LanyardErrorBoundary from './lanyard/LanyardErrorBoundary'
+import TiltCard from './TiltCard'
+import MagneticButton from './MagneticButton'
 import { generateBuilderId } from '../hooks/useQRCode'
 import type { GeneratorMode, BuilderData, PfpFrameStyle } from '../types'
 import './GeneratorSection.css'
@@ -28,13 +28,17 @@ export type { BuilderData }
 const ACCEPTED_FORMATS = ['image/jpeg', 'image/png', 'image/heic', 'image/heif']
 const MAX_SIZE_MB = 10
 
+/** Sanitize user text input — strip HTML/script tags to prevent XSS */
+function sanitize(input: string): string {
+  return input.replace(/[<>]/g, '').replace(/javascript:/gi, '').trim()
+}
+
 export default function GeneratorSection() {
   const [mode, setMode] = useState<GeneratorMode>('upload')
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
-  const [lanyardCardImage, setLanyardCardImage] = useState<string | null>(null)
-  const [previewTab, setPreviewTab] = useState<'3d' | '2d' | 'pfp'>('3d')
+  const [previewTab, setPreviewTab] = useState<'2d' | 'pfp'>('2d')
 
   // Camera states
   const [cameraOpen, setCameraOpen] = useState(false)
@@ -182,13 +186,20 @@ export default function GeneratorSection() {
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) handleFile(file)
+    e.target.value = '' // Allow selecting the same file again
   }
 
   const handleGenerate = async () => {
+    if (!builderData.name.trim() || !builderData.role.trim() || !builderData.college.trim()) {
+      setError("Please fill out your Full Name, Role, and College to generate your ID.")
+      setTimeout(() => setError(null), 4000)
+      return
+    }
+
     setGenerating(true)
     await new Promise(r => setTimeout(r, 1000))
     setGenerating(false)
-    setPreviewTab('3d')
+    setPreviewTab('2d')
     setMode('preview')
   }
 
@@ -197,7 +208,7 @@ export default function GeneratorSection() {
     const canvas = canvasRef.current
     if (!canvas) return
     const link = document.createElement('a')
-    link.download = `hh-goa-builder-id-${builderData.name || 'card'}.png`
+    link.download = `hh-goa-builder-id-${sanitize(builderData.name) || 'card'}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
     setMode('success')
@@ -207,7 +218,7 @@ export default function GeneratorSection() {
     const canvas = pfpCanvasRef.current
     if (!canvas) return
     const link = document.createElement('a')
-    link.download = `hh-goa-pfp-${builderData.name || 'avatar'}.png`
+    link.download = `hh-goa-pfp-${sanitize(builderData.name) || 'avatar'}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
     setMode('success')
@@ -221,11 +232,10 @@ export default function GeneratorSection() {
   }
 
   const handleShareX = () => {
-    const name = builderData.name ? `${builderData.name} ` : ''
     const text = encodeURIComponent(
-      `${name}just generated my official @HackerHouseGoa 2026 Builder Ticket & PFP! 🏗️⚡ #FrameInGoa #HHGoa2026`
+      `I just generated my official @HackerHouseGoa 2026 Builder Ticket & PFP! 🌴\n\nCan't wait to build with everyone in Goa. 🏗️⚡\n\n#FrameInGoa #HHGoa2026`
     )
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'noopener,noreferrer')
   }
 
   const handleReset = () => {
@@ -249,7 +259,11 @@ export default function GeneratorSection() {
     })
     setMode('upload')
     setError(null)
-    setLanyardCardImage(null)
+  }
+
+  /** Sanitized setter for text fields */
+  const updateField = (field: keyof BuilderData, value: string) => {
+    setBuilderData(prev => ({ ...prev, [field]: sanitize(value) }))
   }
 
   return (
@@ -293,7 +307,7 @@ export default function GeneratorSection() {
         </div>
 
         {/* Main Panel */}
-        <div className="generator__panel panel-paper">
+        <div className="generator__panel">
 
           {/* STEP 1: Upload */}
           {mode === 'upload' && (
@@ -434,7 +448,7 @@ export default function GeneratorSection() {
                           className="form-input"
                           placeholder="e.g. Eklavya Dilip Jha"
                           value={builderData.name}
-                          onChange={e => setBuilderData(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={e => updateField('name', e.target.value)}
                           maxLength={32}
                         />
                       </div>
@@ -445,7 +459,7 @@ export default function GeneratorSection() {
                           className="form-input"
                           placeholder="e.g. Full Stack Developer"
                           value={builderData.role}
-                          onChange={e => setBuilderData(prev => ({ ...prev, role: e.target.value }))}
+                          onChange={e => updateField('role', e.target.value)}
                           maxLength={35}
                         />
                       </div>
@@ -456,7 +470,7 @@ export default function GeneratorSection() {
                           className="form-input"
                           placeholder="e.g. Gandhinagar University"
                           value={builderData.college}
-                          onChange={e => setBuilderData(prev => ({ ...prev, college: e.target.value }))}
+                          onChange={e => updateField('college', e.target.value)}
                           maxLength={35}
                         />
                       </div>
@@ -467,7 +481,7 @@ export default function GeneratorSection() {
                           className="form-input"
                           placeholder="e.g. Full-Moon Merge Monk"
                           value={builderData.titleBadge}
-                          onChange={e => setBuilderData(prev => ({ ...prev, titleBadge: e.target.value }))}
+                          onChange={e => updateField('titleBadge', e.target.value)}
                           maxLength={30}
                         />
                       </div>
@@ -488,7 +502,7 @@ export default function GeneratorSection() {
                           className="form-input"
                           placeholder="e.g. ....91 or @handle"
                           value={builderData.phone}
-                          onChange={e => setBuilderData(prev => ({ ...prev, phone: e.target.value }))}
+                          onChange={e => updateField('phone', e.target.value)}
                           maxLength={20}
                         />
                       </div>
@@ -496,10 +510,9 @@ export default function GeneratorSection() {
                         <label className="form-label">Builder ID (Auto-generated)</label>
                         <input
                           type="text"
-                          className="form-input"
+                          className="form-input form-input--readonly"
                           value={builderData.builderNo}
                           readOnly
-                          style={{ opacity: 0.85, fontWeight: 700, letterSpacing: '0.05em' }}
                         />
                       </div>
                     </div>
@@ -513,45 +526,12 @@ export default function GeneratorSection() {
                     </h4>
                     <div className="form-grid">
                       <div className="form-group">
-                        <label className="form-label">Builder Class</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="e.g. Terminal Wizard"
-                          value={builderData.builderClass}
-                          onChange={e => setBuilderData(prev => ({ ...prev, builderClass: e.target.value }))}
-                          maxLength={25}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Beach Bag / Interests</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="e.g. Coconut · VS Code · Lo-Fi Beats"
-                          value={builderData.beachBag}
-                          onChange={e => setBuilderData(prev => ({ ...prev, beachBag: e.target.value }))}
-                          maxLength={40}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Shipping Project</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="e.g. Building The Future"
-                          value={builderData.shipping}
-                          onChange={e => setBuilderData(prev => ({ ...prev, shipping: e.target.value }))}
-                          maxLength={30}
-                        />
-                      </div>
-                      <div className="form-group">
                         <label className="form-label">Event Dates</label>
                         <input
                           type="text"
                           className="form-input"
                           value={builderData.dates}
-                          onChange={e => setBuilderData(prev => ({ ...prev, dates: e.target.value }))}
+                          onChange={e => updateField('dates', e.target.value)}
                           maxLength={30}
                         />
                       </div>
@@ -586,15 +566,18 @@ export default function GeneratorSection() {
                 </div>
               </div>
 
+              {error && (
+                <div className="generator__error" style={{ marginBottom: '16px', justifyContent: 'center' }}>
+                  <X size={14} />
+                  {error}
+                </div>
+              )}
+
               <div className="generator__form-actions">
-                <button
-                  className="btn btn-outline"
-                  style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }}
-                  onClick={handleReset}
-                >
+                <button className="btn btn-outline" onClick={handleReset}>
                   ← Back
                 </button>
-                <button className="btn btn-terracotta btn-lg" onClick={handleGenerate} disabled={generating}>
+                <MagneticButton className="btn btn-terracotta btn-lg" onClick={handleGenerate} disabled={generating}>
                   {generating ? (
                     <>
                       <div className="spinner" />
@@ -606,7 +589,7 @@ export default function GeneratorSection() {
                       Generate Official Assets
                     </>
                   )}
-                </button>
+                </MagneticButton>
               </div>
             </div>
           )}
@@ -614,14 +597,8 @@ export default function GeneratorSection() {
           {/* STEP 3: Preview */}
           {mode === 'preview' && (
             <div className="generator__preview">
-              {/* Tab Switcher */}
+              {/* Tab Switcher — 2D Card & PFP only */}
               <div className="preview-tab-toggle">
-                <button
-                  className={`preview-tab-btn ${previewTab === '3d' ? 'preview-tab-btn--active' : ''}`}
-                  onClick={() => setPreviewTab('3d')}
-                >
-                  🎪 3D Interactive Lanyard
-                </button>
                 <button
                   className={`preview-tab-btn ${previewTab === '2d' ? 'preview-tab-btn--active' : ''}`}
                   onClick={() => setPreviewTab('2d')}
@@ -636,33 +613,6 @@ export default function GeneratorSection() {
                 </button>
               </div>
 
-              {/* 3D Lanyard Tab */}
-              {previewTab === '3d' && (
-                <div className="generator__lanyard-container">
-                  <div className="generator__lanyard-canvas">
-                    <LanyardErrorBoundary>
-                      <Suspense
-                        fallback={
-                          <div className="lanyard-loading">
-                            <div className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
-                            <span>Loading 3D Physics…</span>
-                          </div>
-                        }
-                      >
-                        <Lanyard
-                          position={[0, 0, 16]}
-                          gravity={[0, -40, 0]}
-                          frontImage={lanyardCardImage}
-                          imageFit="cover"
-                          lanyardWidth={1}
-                        />
-                      </Suspense>
-                    </LanyardErrorBoundary>
-                  </div>
-                  <p className="generator__lanyard-hint">✦ Drag to swing & rotate your official pass ✦</p>
-                </div>
-              )}
-
               {/* 2D ID Card Tab */}
               <div
                 className="generator__canvas-wrap"
@@ -672,11 +622,12 @@ export default function GeneratorSection() {
                     : { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }
                 }
               >
-                <CardCanvas
-                  ref={canvasRef}
-                  builderData={builderData}
-                  onRenderComplete={url => setLanyardCardImage(url)}
-                />
+                <TiltCard maxTilt={8}>
+                  <CardCanvas
+                    ref={canvasRef}
+                    builderData={builderData}
+                  />
+                </TiltCard>
               </div>
 
               {/* PFP Avatar Tab */}
@@ -688,38 +639,36 @@ export default function GeneratorSection() {
                     : { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }
                 }
               >
-                <PfpRenderer
-                  ref={pfpCanvasRef}
-                  builderData={builderData}
-                  frameStyle={builderData.pfpFrame}
-                />
+                <TiltCard maxTilt={8}>
+                  <PfpRenderer
+                    ref={pfpCanvasRef}
+                    builderData={builderData}
+                    frameStyle={builderData.pfpFrame}
+                  />
+                </TiltCard>
               </div>
 
               {/* Actions */}
               <div className="generator__preview-actions">
-                <button
-                  className="btn btn-outline btn-lg"
-                  style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }}
-                  onClick={() => setMode('form')}
-                >
+                <button className="btn btn-outline btn-lg" onClick={() => setMode('form')}>
                   ← Edit Details
                 </button>
-                <button className="btn btn-primary btn-lg" onClick={handleDownloadIdCard}>
+                <MagneticButton className="btn btn-primary btn-lg" onClick={handleDownloadIdCard}>
                   <Download size={18} />
                   Download ID (1200×1800)
-                </button>
-                <button className="btn btn-primary btn-lg" onClick={handleDownloadPfp}>
+                </MagneticButton>
+                <MagneticButton className="btn btn-primary btn-lg" onClick={handleDownloadPfp}>
                   <ImageIcon size={18} />
                   Download PFP (1024×1024)
-                </button>
-                <button className="btn btn-terracotta btn-lg" onClick={handleDownloadBoth}>
+                </MagneticButton>
+                <MagneticButton className="btn btn-terracotta btn-lg" onClick={handleDownloadBoth}>
                   <Layers size={18} />
                   Download Both
-                </button>
-                <button className="btn btn-outline btn-lg" onClick={handleShareX}>
+                </MagneticButton>
+                <MagneticButton className="btn btn-outline btn-lg" onClick={handleShareX}>
                   <span style={{ fontWeight: 700 }}>𝕏</span>
-                  Share to X
-                </button>
+                  Post to X (Attach Assets)
+                </MagneticButton>
               </div>
               <p className="generator__preview-note">#FrameInGoa · Hacker House Goa 2026</p>
             </div>
@@ -729,47 +678,23 @@ export default function GeneratorSection() {
           {mode === 'success' && (
             <div className="generator__success">
               <div className="success-icon animate-scale-in">
-                <CheckCircle size={56} style={{ color: 'var(--hh-forest)' }} />
+                <CheckCircle size={56} />
               </div>
-              <h3 className="display-medium" style={{ color: 'var(--hh-forest-dark)' }}>
+              <h3 className="display-medium generator__success-heading">
                 Assets Downloaded! 🎉
               </h3>
-              <p className="body-md generator__success-sub" style={{ color: 'var(--hh-forest)' }}>
+              <p className="body-md generator__success-sub">
                 Your Official Hacker House Goa Builder Ticket & PFP Avatar are saved. Share it on X and tag #FrameInGoa!
               </p>
               <div className="generator__success-actions">
-                <button className="btn btn-primary btn-lg" onClick={handleShareX}>
+                <MagneticButton className="btn btn-primary btn-lg" onClick={handleShareX}>
                   <span style={{ fontWeight: 700 }}>𝕏</span>
-                  Share to X — #FrameInGoa
-                </button>
-                <button
-                  className="btn btn-outline"
-                  style={{ color: 'var(--hh-forest-dark)', borderColor: 'var(--hh-forest-dark)' }}
-                  onClick={handleReset}
-                >
+                  Post to X (Don't forget to attach your PFP!)
+                </MagneticButton>
+                <button className="btn btn-outline" onClick={handleReset}>
                   Generate Another
                 </button>
               </div>
-
-              {/* 3D Lanyard Showcase */}
-              {lanyardCardImage && (
-                <div className="generator__lanyard-container" style={{ marginTop: '24px' }}>
-                  <div className="generator__lanyard-canvas" style={{ height: '440px' }}>
-                    <LanyardErrorBoundary>
-                      <Suspense fallback={<div className="lanyard-loading"><div className="spinner" /></div>}>
-                        <Lanyard
-                          position={[0, 0, 24]}
-                          gravity={[0, -40, 0]}
-                          frontImage={lanyardCardImage}
-                          imageFit="cover"
-                          lanyardWidth={1}
-                        />
-                      </Suspense>
-                    </LanyardErrorBoundary>
-                  </div>
-                  <p className="generator__lanyard-hint">✦ Drag to swing your saved pass ✦</p>
-                </div>
-              )}
             </div>
           )}
         </div>

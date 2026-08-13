@@ -1,7 +1,54 @@
 /* ==========================================================================
-   GOA AMBIENCE — Background Effects & Animation
+   GOA AMBIENCE — Background Image & Overlay Effects
    ========================================================================== */
 
+/* ── Fixed background illustration ───────────────────────────────────────── */
+.goa-ambience__bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+
+  /* Anchor the image to the bottom so the beach scene always sits at footer */
+  background-image: url('/goa-bg.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: bottom center;
+
+  /* Subtle slow zoom for a living-poster feel */
+  animation: bgBreath 30s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+
+@keyframes bgBreath {
+  from { transform: scale(1);    filter: brightness(0.85) saturate(1.1); }
+  to   { transform: scale(1.04); filter: brightness(0.92) saturate(1.2); }
+}
+
+/* ── Multi-layer gradient overlay for readability ─────────────────────────
+   Layer 1 – Heavy dark-forest veil from top so hero text pops
+   Layer 2 – Mid-section semi-transparent green so cards sit above scenery
+   Layer 3 – Transparent at the very bottom to let the sun/beach breathe
+   ───────────────────────────────────────────────────────────────────────── */
+.goa-ambience__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    /* Top-heavy dark veil so navigation & hero text are fully readable */
+    linear-gradient(
+      to bottom,
+      rgba(3, 33, 28, 0.96)  0%,
+      rgba(3, 33, 28, 0.88)  25%,
+      rgba(4, 74, 41, 0.70)  50%,
+      rgba(4, 74, 41, 0.45)  72%,
+      rgba(4, 74, 41, 0.15)  88%,
+      rgba(4, 74, 41, 0.05) 100%
+    );
+}
+
+/* ── Legacy container kept for other child elements ──────────────────────── */
 .goa-ambience {
   position: fixed;
   inset: 0;
@@ -10,23 +57,26 @@
   overflow: hidden;
 }
 
+/* ── Subtle horizon glow (sun bleed above the overlay) ───────────────────── */
 .goa-ambience__horizon {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 60vh;
-  background: radial-gradient(circle at 50% -20%, rgba(245, 200, 66, 0.12), transparent 70%),
-              radial-gradient(circle at 80% 30%, rgba(231, 43, 104, 0.08), transparent 50%);
+  background:
+    radial-gradient(circle at 50% -20%, rgba(245, 200, 66, 0.08), transparent 70%),
+    radial-gradient(circle at 80% 30%, rgba(231, 43, 104, 0.05), transparent 50%);
 }
 
+/* ── Ocean shimmer band ──────────────────────────────────────────────────── */
 .goa-ambience__ocean {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 40vh;
-  opacity: 0.15;
+  height: 30vh;
+  opacity: 0.08;
 }
 
 .goa-ambience__ocean-wave {
@@ -44,24 +94,11 @@
   animation: waveFloat 20s infinite linear;
 }
 
-.goa-ambience__ocean-wave--1 {
-  bottom: 0;
-  animation-duration: 25s;
-}
+.goa-ambience__ocean-wave--1 { bottom: 0;    animation-duration: 25s; }
+.goa-ambience__ocean-wave--2 { bottom: 40px; animation-duration: 18s; animation-direction: reverse; opacity: 0.7; }
+.goa-ambience__ocean-wave--3 { bottom: 80px; animation-duration: 32s; opacity: 0.4; }
 
-.goa-ambience__ocean-wave--2 {
-  bottom: 40px;
-  animation-duration: 18s;
-  animation-direction: reverse;
-  opacity: 0.7;
-}
-
-.goa-ambience__ocean-wave--3 {
-  bottom: 80px;
-  animation-duration: 32s;
-  opacity: 0.4;
-}
-
+/* ── Floating tropical particles ────────────────────────────────────────── */
 .goa-ambience__particles {
   position: absolute;
   inset: 0;
@@ -69,11 +106,12 @@
 
 .goa-ambience__particle {
   position: absolute;
-  opacity: 0.4;
+  opacity: 0.35;
   user-select: none;
   animation: particleFloat 15s infinite ease-in-out;
 }
 
+/* ── Firefly sparkles ────────────────────────────────────────────────────── */
 .goa-ambience__fireflies {
   position: absolute;
   inset: 0;
@@ -89,48 +127,35 @@
   animation: fireflyPulse 4s infinite ease-in-out;
 }
 
+/* ── Ambient glow orbs ───────────────────────────────────────────────────── */
 .goa-ambience__orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.15;
+  opacity: 0.10;
 }
 
-.goa-ambience__orb--sun {
-  top: -100px;
-  left: 30%;
-  width: 500px;
-  height: 500px;
-  background: #F5C842;
-}
+.goa-ambience__orb--sun   { top: -100px; left: 30%;  width: 500px; height: 500px; background: #F5C842; }
+.goa-ambience__orb--coral { top: 40%;   right: -100px; width: 450px; height: 450px; background: #E72B68; }
+.goa-ambience__orb--sea   { bottom: -150px; left: 10%; width: 600px; height: 600px; background: #064F36; }
 
-.goa-ambience__orb--coral {
-  top: 40%;
-  right: -100px;
-  width: 450px;
-  height: 450px;
-  background: #E72B68;
-}
-
-.goa-ambience__orb--sea {
-  bottom: -150px;
-  left: 10%;
-  width: 600px;
-  height: 600px;
-  background: #064F36;
-}
-
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
 @keyframes waveFloat {
-  0% { transform: rotate(0deg); }
+  0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
 @keyframes particleFloat {
   0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-25px) scale(1.1); }
+  50%       { transform: translateY(-25px) scale(1.1); }
 }
 
 @keyframes fireflyPulse {
   0%, 100% { opacity: 0.2; transform: scale(0.8); }
-  50% { opacity: 0.9; transform: scale(1.3); }
+  50%       { opacity: 0.9; transform: scale(1.3); }
+}
+
+/* ── Reduce motion ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .goa-ambience__bg-image { animation: none; }
 }

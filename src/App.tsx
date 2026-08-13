@@ -8,6 +8,7 @@ import Roadmap from './components/Roadmap'
 import Community from './components/Community'
 import Footer from './components/Footer'
 import GoaAmbience from './components/GoaAmbience'
+import ScrollReveal from './components/ScrollReveal'
 import './App.css'
 
 function App() {
@@ -19,13 +20,25 @@ function App() {
       <Navbar activeSection={activeSection} setActiveSection={setActiveSection} />
       <main>
         <Hero />
-        <StatsBar />
-        <HowItWorks />
-        <GeneratorSection />
-        <Roadmap />
-        <Community />
+        <ScrollReveal as="div">
+          <StatsBar />
+        </ScrollReveal>
+        <ScrollReveal as="div" delay={1}>
+          <HowItWorks />
+        </ScrollReveal>
+        <ScrollReveal as="div">
+          <GeneratorSection />
+        </ScrollReveal>
+        <ScrollReveal as="div">
+          <Roadmap />
+        </ScrollReveal>
+        <ScrollReveal as="div">
+          <Community />
+        </ScrollReveal>
       </main>
-      <Footer />
+      <ScrollReveal as="div">
+        <Footer />
+      </ScrollReveal>
     </div>
   )
 }

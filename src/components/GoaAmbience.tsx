@@ -25,6 +25,13 @@ const fireflies = Array.from({ length: 18 }, (_, i) => ({
 
 export default function GoaAmbience() {
   return (
+    <>
+      {/* Fixed Goa beach illustration background */}
+      <div className="goa-ambience__bg-image" aria-hidden="true" />
+
+      {/* Multi-layer dark overlay for readability */}
+      <div className="goa-ambience__overlay" aria-hidden="true" />
+
     <div className="goa-ambience" aria-hidden="true">
       {/* Sunset gradient horizon */}
       <div className="goa-ambience__horizon" />
@@ -76,5 +83,6 @@ export default function GoaAmbience() {
       <div className="goa-ambience__orb goa-ambience__orb--coral animate-glow delay-2" />
       <div className="goa-ambience__orb goa-ambience__orb--sea animate-glow delay-3" />
     </div>
+    </>
   )
 }

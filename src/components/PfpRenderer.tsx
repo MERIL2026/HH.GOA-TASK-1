@@ -194,7 +194,8 @@ async function drawCenterPhoto(ctx: CanvasRenderingContext2D, data: BuilderData,
       sx = (img.width - img.height) / 2
     } else {
       sh = img.width
-      sy = (img.height - img.width) / 2
+      // Shift crop upwards for portraits to avoid cutting off heads
+      sy = (img.height - img.width) * 0.15
     }
 
     ctx.drawImage(img, sx, sy, sw, sh, cx - r, cy - r, r * 2, r * 2)
@@ -282,18 +283,18 @@ function drawFrameOverlay(ctx: CanvasRenderingContext2D, data: BuilderData, fram
     // Bottom Identity Pill Badge
     ctx.fillStyle = C.green
     ctx.beginPath()
-    ctx.roundRect(100, H - 135, W - 200, 85, 42)
+    ctx.roundRect(100, H - 155, W - 200, 110, 55)
     ctx.fill()
     ctx.strokeStyle = C.yellow
-    ctx.lineWidth = 5
+    ctx.lineWidth = 6
     ctx.stroke()
 
-    ctx.font = '900 28px Space Grotesk, sans-serif'
+    ctx.font = '900 38px Space Grotesk, sans-serif'
     ctx.fillStyle = C.white
-    ctx.fillText(name.length > 22 ? name.slice(0, 20) + '…' : name, W / 2, H - 102)
-    ctx.font = '900 18px JetBrains Mono, monospace'
+    ctx.fillText(name.length > 22 ? name.slice(0, 20) + '…' : name, W / 2, H - 115)
+    ctx.font = '900 24px JetBrains Mono, monospace'
     ctx.fillStyle = C.yellow
-    ctx.fillText(`${(data.role || 'BUILDER').toUpperCase()} · ${idNumber}`, W / 2, H - 74)
+    ctx.fillText(`${(data.role || 'BUILDER').toUpperCase()} · ${idNumber}`, W / 2, H - 75)
   }
 
   ctx.restore()

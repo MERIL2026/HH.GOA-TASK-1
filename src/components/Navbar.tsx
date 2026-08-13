@@ -35,13 +35,9 @@ export default function Navbar({ activeSection, setActiveSection }: NavbarProps)
     <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="navbar__inner container-wide">
 
-        {/* Logo */}
+        {/* Logo — Uses provided brand image */}
         <div className="navbar__logo" onClick={() => scrollToSection('home')}>
-          <div className="navbar__logo-wordmark">
-            <img src="/hhgoa-logo.png" alt="HH Goa Official Logo" className="navbar__logo-img" />
-            HH <span>GOA</span>
-          </div>
-          <div className="navbar__logo-year">2026</div>
+          <img src="/hhgoa-logo.png" alt="Hacker House Goa Logo" className="navbar__logo-img" />
         </div>
 
         {/* Desktop Links */}
@@ -84,21 +80,7 @@ export default function Navbar({ activeSection, setActiveSection }: NavbarProps)
             </button>
           ))}
           <button
-            style={{
-              marginTop: '12px',
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 700,
-              fontSize: '13px',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              background: 'var(--hh-yellow)',
-              color: '#022C19',
-              border: '2px solid var(--hh-yellow)',
-              padding: '12px 24px',
-              cursor: 'pointer',
-              boxShadow: '3px 3px 0 #022C19',
-              width: '100%',
-            }}
+            className="navbar__mobile-cta"
             onClick={() => scrollToSection('generator')}
           >
             Generate Your ID →

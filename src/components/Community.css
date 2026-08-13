@@ -150,4 +150,10 @@
 
 @media (max-width: 480px) {
   .community__stats { grid-template-columns: 1fr 1fr; }
+  .community__banner { padding: 32px 16px; }
+  .community__stat { padding: 24px 16px; }
+}
+
+@media (max-width: 360px) {
+  .community__stats { grid-template-columns: 1fr; }
 }

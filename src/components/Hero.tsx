@@ -1,7 +1,6 @@
-import { Suspense } from 'react'
-import Lanyard from './lanyard/Lanyard'
-import LanyardErrorBoundary from './lanyard/LanyardErrorBoundary'
 import './Hero.css'
+import TiltCard from './TiltCard'
+import MagneticButton from './MagneticButton'
 
 const tickerItems = [
   '⚡ Hacker House Goa 2026',
@@ -90,15 +89,15 @@ export default function Hero() {
 
             {/* CTA Actions */}
             <div className="hero__actions animate-fade-up delay-5">
-              <button className="btn btn-primary btn-lg" onClick={scrollToGenerator}>
+              <MagneticButton className="btn btn-primary btn-lg" onClick={scrollToGenerator}>
                 Generate Your Ticket →
-              </button>
-              <button
+              </MagneticButton>
+              <MagneticButton
                 className="btn btn-outline btn-lg"
                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 How It Works ↓
-              </button>
+              </MagneticButton>
             </div>
 
             {/* Meta row */}
@@ -122,43 +121,35 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* RIGHT — 3D Lanyard Physics Card */}
+          {/* RIGHT — Premium Animated Mock Card */}
           <div className="hero__visual animate-fade-up delay-3">
-            <div className="hero__lanyard-wrap">
-              <LanyardErrorBoundary>
-                <Suspense fallback={
-                  <div className="hero__lanyard-fallback">
-                    <div className="hero__mock-card animate-float">
-                      <div className="hero__mock-card-stripe" />
-                      <div className="hero__mock-card-header">
-                        <div className="hero__mock-card-logo">HH GOA ⚡</div>
-                        <div className="hero__mock-card-year">2026</div>
-                      </div>
-                      <div className="hero__mock-card-photo">
-                        <div className="hero__mock-photo-placeholder">
-                          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="40" cy="30" r="18" fill="rgba(244,183,40,0.12)" stroke="rgba(244,183,40,0.35)" strokeWidth="1.5"/>
-                            <path d="M10 72 Q10 54 40 54 Q70 54 70 72" fill="rgba(244,183,40,0.12)" stroke="rgba(244,183,40,0.35)" strokeWidth="1.5"/>
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="hero__mock-card-info">
-                        <div className="hero__mock-card-name">BUILDER #108</div>
-                        <div className="hero__mock-card-role">Full Stack · AI · Web3</div>
-                        <div className="hero__mock-card-tag">#FrameInGoa</div>
-                      </div>
+            <div className="hero__card-showcase">
+              <TiltCard maxTilt={15}>
+                <div className="hero__mock-card animate-float">
+                  <div className="hero__mock-card-stripe" />
+                  <div className="hero__mock-card-header">
+                    <img src="/hhgoa-logo.png" alt="HH Goa Logo" className="hero__mock-card-logo-img" />
+                  </div>
+                  <div className="hero__mock-card-photo">
+                    <div className="hero__mock-photo-placeholder">
+                      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="40" cy="30" r="18" fill="rgba(244,183,40,0.12)" stroke="rgba(244,183,40,0.35)" strokeWidth="1.5"/>
+                        <path d="M10 72 Q10 54 40 54 Q70 54 70 72" fill="rgba(244,183,40,0.12)" stroke="rgba(244,183,40,0.35)" strokeWidth="1.5"/>
+                      </svg>
                     </div>
                   </div>
-                }>
-                  <Lanyard
-                    position={[0, 0, 28]}
-                    gravity={[0, -40, 0]}
-                    fov={18}
-                    lanyardWidth={1}
-                  />
-                </Suspense>
-              </LanyardErrorBoundary>
-              <div className="hero__lanyard-hint">✦ Drag to swing ✦</div>
+                  <div className="hero__mock-card-info">
+                    <div className="hero__mock-card-name">BUILDER #108</div>
+                    <div className="hero__mock-card-role">Full Stack · AI · Web3</div>
+                    <div className="hero__mock-card-tag">#FrameInGoa</div>
+                  </div>
+                </div>
+              </TiltCard>
+
+              {/* Floating Badges */}
+              <div className="hero__float-badge hero__float-badge--1 animate-badge-float">⚡ Official ID</div>
+              <div className="hero__float-badge hero__float-badge--2 animate-badge-float delay-2">☀️ Goa 2026</div>
+              <div className="hero__float-badge hero__float-badge--3 animate-badge-float delay-3">🌊 #FrameInGoa</div>
             </div>
           </div>
         </div>
